@@ -1,5 +1,6 @@
 package com.backend.kyf.service
 
+import com.backend.kyf.dto.AttributeDTO
 import com.backend.kyf.dto.FriendDTO
 import com.backend.kyf.repository.FriendRepository
 import com.backend.kyf.utils.FriendMapper
@@ -35,5 +36,16 @@ class FriendService(
 
     fun deleteFriend(friendId: Long) {
         friendRepository.deleteById(friendId)
+    }
+
+    fun addAttributeToFriend(friendId: Long, attributeDTO: AttributeDTO): FriendDTO {
+        val modifiedFriend = friendRepository.findByIdOrNull(friendId) ?: throw RuntimeException("Couldn't find user with id $friendId")
+        modifiedFriend.attributes?.set(attributeDTO.name, attributeDTO.value)
+        friendRepository.save(modifiedFriend)
+        return friendMapper.toDTO(modifiedFriend)
+    }
+
+    fun addAttributeToAllFriends(attributeDTO: AttributeDTO) {
+        TODO()
     }
 }

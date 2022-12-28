@@ -1,5 +1,6 @@
 package com.backend.kyf.controller
 
+import com.backend.kyf.dto.AttributeDTO
 import com.backend.kyf.dto.FriendDTO
 import com.backend.kyf.service.FriendService
 import org.springframework.beans.factory.annotation.Value
@@ -47,5 +48,19 @@ class FriendController(
     fun deleteFriend(@PathVariable friendId: Long): ResponseEntity<Any> {
         friendService.deleteFriend(friendId)
         return ResponseEntity.ok("Friend with id $friendId has been deleted")
+    }
+
+    @PutMapping("/add_attribute/{friendId}")
+    fun addAttributeToFriend(@PathVariable friendId: Long, @RequestBody attributeDTO: AttributeDTO): ResponseEntity<FriendDTO> {
+        val updatedFriendDTO: FriendDTO = friendService.addAttributeToFriend(friendId, attributeDTO)
+        return ResponseEntity
+            .created(Link.of("${baseUrl}/friends/${updatedFriendDTO.id}").toUri())
+            .body(updatedFriendDTO)
+    }
+
+    @PutMapping("/add_attribute")
+    fun addAttributeToAllFriends(@RequestBody attributeDTO: AttributeDTO): ResponseEntity<Any> {
+        friendService.addAttributeToAllFriends(attributeDTO)
+        return ResponseEntity.ok("Attribute ${attributeDTO.name} has been added")
     }
 }

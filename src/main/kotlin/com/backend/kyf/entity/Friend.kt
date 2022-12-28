@@ -17,5 +17,5 @@ class Friend(
     var birthdayDate: LocalDate?,
 
     @ElementCollection
-    var attributes: Map<String, String>?
+    var attributes: MutableMap<String, String?>?
 ) {}
