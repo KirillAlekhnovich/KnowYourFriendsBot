@@ -7,5 +7,9 @@ import javax.persistence.*
 @Table(name = "users")
 class User(
     @Id
-    var id: Long
+    var id: Long,
+
+    @OneToMany
+    @JoinColumn(name = "friend_id")
+    var friends: MutableList<Friend>?
 ) {}
