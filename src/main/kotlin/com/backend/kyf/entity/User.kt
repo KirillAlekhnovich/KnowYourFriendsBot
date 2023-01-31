@@ -11,7 +11,7 @@ class User(
 
     @OneToMany(fetch = FetchType.EAGER)
     @JoinColumn(name = "friend_id")
-    val friends: MutableSet<Friend>?,
+    var friends: MutableSet<Friend>?,
 
     @ElementCollection(fetch = FetchType.EAGER)
     val generalAttributes: MutableSet<String>?

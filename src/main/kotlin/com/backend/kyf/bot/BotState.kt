@@ -17,6 +17,7 @@ enum class BotState {
                 val command = enumValueOf<BotCommand>(message.text.substring(1).uppercase())
                 userBotDTO.state = command.nextState()
                 userBotDTO.command = command
+                if (command == BotCommand.RESET) userService.reset(user.id)
                 command.generateResponse(user)
             } catch (_: IllegalArgumentException) {
                 "I don't know this command. You can check available commands by typing /help"

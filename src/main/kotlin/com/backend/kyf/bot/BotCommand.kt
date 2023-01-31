@@ -43,6 +43,20 @@ enum class BotCommand {
             return "Here you can see a list of all available commands:\n\n${str.joinToString(separator = "")}"
         }
     },
+    RESET {
+        override fun description(): String {
+            return "Resets your profile. Removes all your friends and general attributes"
+        }
+
+        override fun nextState(): BotState {
+            return BotState.EXPECTING_COMMAND
+        }
+
+        override fun generateResponse(user: User): String {
+            return "Your profile has been reset"
+        }
+
+    },
     LIST_FRIENDS {
         override fun description(): String {
             return "Shows a list of your friends"
@@ -53,12 +67,12 @@ enum class BotCommand {
         }
 
         override fun generateResponse(user: User): String {
-            return if (user.friends == null) {
+            return if (user.friends == null || user.friends?.size == 0) {
                 "You have no friends :("
             } else {
                 val stringBuilder = StringBuilder()
                 var index = 1
-                user.friends.map { stringBuilder.append("$index. ${it.name}\n"); index++ }
+                user.friends?.map { stringBuilder.append("$index. ${it.name}\n"); index++ }
                 stringBuilder.toString()
             }
         }

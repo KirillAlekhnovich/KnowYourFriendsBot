@@ -31,8 +31,18 @@ class UserService(
         return userRepository.findByIdOrNull(userId) ?: throw RuntimeException("User with id $userId does not exist")
     }
 
-    fun exists(id: Long): Boolean {
-        return userRepository.existsById(id)
+    fun exists(userId: Long): Boolean {
+        return userRepository.existsById(userId)
+    }
+
+    fun reset(userId: Long) {
+        val user = getUserById(userId)
+        user.friends?.forEach {
+            friendService.deleteFriend(it.id)
+        }
+        user.friends = emptySet<Friend>().toMutableSet()
+        user.generalAttributes?.clear()
+        userRepository.save(user)
     }
 
     fun addFriend(userId: Long, friendDTO: FriendDTO): UserDTO {

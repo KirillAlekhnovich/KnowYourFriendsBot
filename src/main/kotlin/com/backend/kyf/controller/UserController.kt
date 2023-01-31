@@ -25,6 +25,12 @@ class UserController(
             .body(createdUserDTO)
     }
 
+    @PutMapping("/{userId}/reset")
+    fun resetUser(@PathVariable userId: Long): ResponseEntity<Any> {
+        userService.reset(userId)
+        return ResponseEntity.ok("Your profile has been reset")
+    }
+
     @PutMapping("/{userId}/add_friend")
     fun addFriend(@PathVariable userId: Long, @RequestBody friendDTO: FriendDTO): ResponseEntity<UserDTO> {
         val updatedUserDTO: UserDTO = userService.addFriend(userId, friendDTO)
