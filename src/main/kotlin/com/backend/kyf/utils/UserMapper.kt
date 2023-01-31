@@ -13,7 +13,8 @@ class UserMapper: Mapper<UserDTO, User> {
         }?.toMutableSet() ?: throw RuntimeException("Error during friends to friendsSlimDTO conversion")
         return UserDTO(
             entity.id,
-            friendDTOs
+            friendDTOs,
+            entity.generalAttributes
         )
     }
 

@@ -1,10 +1,8 @@
 package com.backend.kyf.dto
 
-import java.time.LocalDate
 
-class FriendDTO(
+data class FriendDTO(
     var id: Long,
     var name: String,
-    var birthdayDate: LocalDate?,
-    var attributes: MutableMap<String, String?>?
+    val attributes: MutableMap<String, String?>?
 )

@@ -10,8 +10,10 @@ import org.telegram.telegrambots.meta.api.objects.Message
 
 enum class BotState {
     EXPECTING_COMMAND {
-        override fun execute(user: User, userBotDTO: UserBotDTO, message: Message,
-                             userService: UserService, friendService: FriendService): String {
+        override fun execute(
+            user: User, userBotDTO: UserBotDTO, message: Message,
+            userService: UserService, friendService: FriendService
+        ): String {
             userBotDTO.storage.clear()
             return try {
                 val command = enumValueOf<BotCommand>(message.text.substring(1).uppercase())
@@ -25,13 +27,15 @@ enum class BotState {
         }
     },
     EXPECTING_FRIEND_NAME {
-        override fun execute(user: User, userBotDTO: UserBotDTO, message: Message,
-                             userService: UserService, friendService: FriendService): String {
+        override fun execute(
+            user: User, userBotDTO: UserBotDTO, message: Message,
+            userService: UserService, friendService: FriendService
+        ): String {
             when (userBotDTO.command) {
                 BotCommand.CANCEL -> return cleanup(user, userBotDTO)
                 BotCommand.FRIEND_INFO -> {
                     val friend = userService.getFriendByName(userBotDTO.id, message.text)
-                        ?: throw RuntimeException("Friend with name ${message.text} was not found")
+                        ?: return "Friend with name ${message.text} was not found"
                     userBotDTO.state = EXPECTING_COMMAND
                     val stringBuilder = StringBuilder()
                     for ((name, value) in friend.attributes!!) {
@@ -40,20 +44,25 @@ enum class BotState {
                     return "Friend - ${friend.name}:\n${stringBuilder}"
                 }
                 BotCommand.ADD_FRIEND -> {
-                    userService.addFriend(userBotDTO.id, FriendDTO(0, message.text, null, null))
                     userBotDTO.state = EXPECTING_COMMAND
-                    return "Friend was successfully added"
+                    return try {
+                        userService.addFriend(userBotDTO.id, FriendDTO(0, message.text, null))
+                        "Friend was successfully added"
+                    } catch (e: RuntimeException) {
+                        "There is already one ${message.text} in your friends list. Would you mind naming this friend different?"
+                    }
                 }
                 BotCommand.REMOVE_FRIEND -> {
                     val friendId = userService.getFriendByName(userBotDTO.id, message.text)?.id
-                        ?: throw RuntimeException("Friend with name ${message.text} was not found")
+                        ?: return "Friend with name ${message.text} was not found"
                     userService.removeFriend(userBotDTO.id, friendId)
                     userBotDTO.state = EXPECTING_COMMAND
                     return "Friend was successfully removed"
                 }
                 BotCommand.ADD_FRIENDS_ATTRIBUTE, BotCommand.UPDATE_FRIENDS_ATTRIBUTE, BotCommand.REMOVE_FRIENDS_ATTRIBUTE -> {
-                    userBotDTO.storage["Friend id"] =
-                        userService.getFriendByName(userBotDTO.id, message.text)?.id.toString()
+                    val friend = userService.getFriendByName(userBotDTO.id, message.text)?.id
+                        ?: return "Friend with name ${message.text} was not found"
+                    userBotDTO.storage["Friend id"] = friend.toString()
                     userBotDTO.state = EXPECTING_ATTRIBUTE_NAME
                     return "Please enter attribute name"
                 }
@@ -65,8 +74,10 @@ enum class BotState {
         }
     },
     EXPECTING_ATTRIBUTE_NAME {
-        override fun execute(user: User, userBotDTO: UserBotDTO, message: Message,
-                             userService: UserService, friendService: FriendService): String {
+        override fun execute(
+            user: User, userBotDTO: UserBotDTO, message: Message,
+            userService: UserService, friendService: FriendService
+        ): String {
             when (userBotDTO.command) {
                 BotCommand.CANCEL -> return cleanup(user, userBotDTO)
                 BotCommand.ADD_FRIENDS_ATTRIBUTE, BotCommand.UPDATE_FRIENDS_ATTRIBUTE -> {
@@ -76,6 +87,7 @@ enum class BotState {
                 }
                 BotCommand.REMOVE_FRIENDS_ATTRIBUTE -> {
                     if (!userBotDTO.storage.containsKey("Friend id")) {
+                        userBotDTO.storage.clear()
                         userBotDTO.state = EXPECTING_COMMAND
                         return "Friend was not specified"
                     }
@@ -101,18 +113,23 @@ enum class BotState {
         }
     },
     EXPECTING_ATTRIBUTE_VALUE {
-        override fun execute(user: User, userBotDTO: UserBotDTO, message: Message,
-                             userService: UserService, friendService: FriendService): String {
+        override fun execute(
+            user: User, userBotDTO: UserBotDTO, message: Message,
+            userService: UserService, friendService: FriendService
+        ): String {
             when (userBotDTO.command) {
                 BotCommand.CANCEL -> return cleanup(user, userBotDTO)
                 BotCommand.ADD_FRIENDS_ATTRIBUTE, BotCommand.UPDATE_FRIENDS_ATTRIBUTE -> {
                     if (!userBotDTO.storage.containsKey("Friend id")
-                        || !userBotDTO.storage.containsKey("Attribute name")) {
+                        || !userBotDTO.storage.containsKey("Attribute name")
+                    ) {
                         userBotDTO.state = EXPECTING_COMMAND
                         return "Friend or attribute was not specified"
                     }
-                    friendService.addAttributeToFriend(userBotDTO.storage["Friend id"]!!.toLong(),
-                        AttributeDTO(userBotDTO.storage["Attribute name"]!!, message.text))
+                    friendService.addAttributeToFriend(
+                        userBotDTO.storage["Friend id"]!!.toLong(),
+                        AttributeDTO(userBotDTO.storage["Attribute name"]!!, message.text)
+                    )
                     userBotDTO.state = EXPECTING_COMMAND
                     return "Attribute was successfully added/updated"
                 }
@@ -124,8 +141,10 @@ enum class BotState {
         }
     };
 
-    abstract fun execute(user: User, userBotDTO: UserBotDTO, message: Message,
-                         userService: UserService, friendService: FriendService): String
+    abstract fun execute(
+        user: User, userBotDTO: UserBotDTO, message: Message,
+        userService: UserService, friendService: FriendService
+    ): String
 
     fun cleanup(user: User, userBotDTO: UserBotDTO): String {
         userBotDTO.storage.clear()

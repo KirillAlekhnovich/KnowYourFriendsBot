@@ -28,7 +28,7 @@ class FriendController(
 
     @GetMapping("/{friendId}")
     fun getFriend(@PathVariable friendId: Long): ResponseEntity<FriendDTO> {
-        return ResponseEntity.ok(friendService.getFriendById(friendId))
+        return ResponseEntity.ok(friendService.getFriendDTOById(friendId))
     }
 
     @PutMapping("/{friendId}/update")

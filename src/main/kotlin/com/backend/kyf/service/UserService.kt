@@ -40,7 +40,7 @@ class UserService(
         user.friends?.forEach {
             friendService.deleteFriend(it.id)
         }
-        user.friends = emptySet<Friend>().toMutableSet()
+        user.friends?.clear()
         user.generalAttributes?.clear()
         userRepository.save(user)
     }
@@ -51,7 +51,8 @@ class UserService(
         user.generalAttributes?.forEach {
             friendService.addAttributeToFriend(friend.id, AttributeDTO(it, "Not set"))
         }
-        user.friends?.add(friend)
+        if (user.friends!!.any { it.name == friend.name }) throw RuntimeException("User already has friend named ${friend.name}")
+        user.friends.add(friend)
         userRepository.save(user)
         return userMapper.toDTO(user)
     }
@@ -88,10 +89,9 @@ class UserService(
 
     fun removeFriend(userId: Long, friendId: Long): UserDTO {
         val user = getUserById(userId)
-        val friend = friendMapper.toEntity(friendService.getFriendById(friendId))
-        user.friends?.remove(friend)
+        val friend = friendService.getFriendById(friendId)
         friendService.deleteFriend(friendId)
-        userRepository.save(user)
+        user.friends?.remove(friend)
         return userMapper.toDTO(user)
     }
 }

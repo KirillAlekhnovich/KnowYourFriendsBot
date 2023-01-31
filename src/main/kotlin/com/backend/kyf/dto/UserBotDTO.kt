@@ -3,9 +3,9 @@ package com.backend.kyf.dto
 import com.backend.kyf.bot.BotCommand
 import com.backend.kyf.bot.BotState
 
-class UserBotDTO(
+data class UserBotDTO(
     var id: Long,
     var command: BotCommand,
     var state: BotState,
-    var storage: MutableMap<String, String>
+    val storage: MutableMap<String, String>
 )

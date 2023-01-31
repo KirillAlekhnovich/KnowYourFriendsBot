@@ -1,6 +1,6 @@
 package com.backend.kyf.dto
 
-class AttributeDTO(
+data class AttributeDTO(
     val name: String,
     val value: String?
 )

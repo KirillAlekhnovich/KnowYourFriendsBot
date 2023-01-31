@@ -1,6 +1,6 @@
 package com.backend.kyf.dto
 
-class FriendSlimDTO(
+data class FriendSlimDTO(
     var id: Long,
     var name: String,
 )

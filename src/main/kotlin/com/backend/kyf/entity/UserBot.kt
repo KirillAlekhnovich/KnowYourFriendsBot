@@ -6,7 +6,7 @@ import javax.persistence.*
 
 
 @Entity
-class UserBot(
+data class UserBot(
     @Id
     var id: Long,
 
@@ -15,5 +15,5 @@ class UserBot(
     var state: BotState,
 
     @ElementCollection(fetch = FetchType.EAGER)
-    var storage: MutableMap<String, String>
+    val storage: MutableMap<String, String>
 )

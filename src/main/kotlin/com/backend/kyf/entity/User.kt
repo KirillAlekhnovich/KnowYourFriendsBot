@@ -5,13 +5,13 @@ import javax.persistence.*
 
 @Entity
 @Table(name = "users")
-class User(
+data class User(
     @Id
     var id: Long,
 
     @OneToMany(fetch = FetchType.EAGER)
     @JoinColumn(name = "friend_id")
-    var friends: MutableSet<Friend>?,
+    val friends: MutableSet<Friend>?,
 
     @ElementCollection(fetch = FetchType.EAGER)
     val generalAttributes: MutableSet<String>?

@@ -11,7 +11,6 @@ class FriendMapper: Mapper<FriendDTO, Friend> {
         return FriendDTO(
             entity.id,
             entity.name,
-            entity.birthdayDate,
             entity.attributes
         )
     }
@@ -20,7 +19,6 @@ class FriendMapper: Mapper<FriendDTO, Friend> {
         return Friend(
             dto.id,
             dto.name,
-            dto.birthdayDate,
             dto.attributes
         )
     }
