@@ -9,7 +9,10 @@ class User(
     @Id
     var id: Long,
 
-    @OneToMany
+    @OneToMany(fetch = FetchType.EAGER)
     @JoinColumn(name = "friend_id")
-    var friends: MutableList<Friend>?
-) {}
+    val friends: MutableSet<Friend>?,
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    val generalAttributes: MutableSet<String>?
+)

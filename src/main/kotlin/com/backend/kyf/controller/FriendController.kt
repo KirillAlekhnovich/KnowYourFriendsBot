@@ -18,7 +18,7 @@ class FriendController(
     @Value("\${server.url}")
     private lateinit var baseUrl: String
 
-    @PostMapping()
+    @PostMapping
     fun createFriend(@RequestBody friendDTO: FriendDTO): ResponseEntity<FriendDTO> {
         val createdFriendDTO: FriendDTO = friendService.createFriend(friendDTO)
         return ResponseEntity
@@ -29,11 +29,6 @@ class FriendController(
     @GetMapping("/{friendId}")
     fun getFriend(@PathVariable friendId: Long): ResponseEntity<FriendDTO> {
         return ResponseEntity.ok(friendService.getFriendById(friendId))
-    }
-
-    @GetMapping()
-    fun getAllFriends(): ResponseEntity<List<FriendDTO>> {
-        return ResponseEntity.ok(friendService.getAllFriends())
     }
 
     @PutMapping("/{friendId}/update")
@@ -56,11 +51,5 @@ class FriendController(
         return ResponseEntity
             .created(Link.of("${baseUrl}/friends/${updatedFriendDTO.id}").toUri())
             .body(updatedFriendDTO)
-    }
-
-    @PutMapping("/add_attribute")
-    fun addAttributeToAllFriends(@RequestBody attributeDTO: AttributeDTO): ResponseEntity<Any> {
-        friendService.addAttributeToAllFriends(attributeDTO)
-        return ResponseEntity.ok("Attribute ${attributeDTO.name} has been added")
     }
 }

@@ -8,9 +8,9 @@ import org.springframework.stereotype.Component
 @Component
 class UserMapper: Mapper<UserDTO, User> {
     override fun toDTO(entity: User): UserDTO {
-        val friendDTOs: MutableList<FriendSlimDTO> = entity.friends?.map {
+        val friendDTOs: MutableSet<FriendSlimDTO> = entity.friends?.map {
             FriendSlimDTO(it.id, it.name)
-        }?.toMutableList() ?: throw RuntimeException("Error during friends to friendsSlimDTO conversion")
+        }?.toMutableSet() ?: throw RuntimeException("Error during friends to friendsSlimDTO conversion")
         return UserDTO(
             entity.id,
             friendDTOs

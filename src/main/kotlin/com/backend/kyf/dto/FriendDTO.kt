@@ -7,4 +7,4 @@ class FriendDTO(
     var name: String,
     var birthdayDate: LocalDate?,
     var attributes: MutableMap<String, String?>?
-) {}
+)

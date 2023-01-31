@@ -24,10 +24,6 @@ class FriendService(
         return friendMapper.toDTO(friend)
     }
 
-    fun getAllFriends(): List<FriendDTO> {
-        TODO()
-    }
-
     fun updateFriend(friendId: Long, newFriendDTO: FriendDTO): FriendDTO {
         val modifiedFriend = friendRepository.findByIdOrNull(friendId) ?: throw RuntimeException("Couldn't find user with id $friendId")
         // TODO()
@@ -45,7 +41,10 @@ class FriendService(
         return friendMapper.toDTO(modifiedFriend)
     }
 
-    fun addAttributeToAllFriends(attributeDTO: AttributeDTO) {
-        TODO()
+    fun deleteAttributeFromFriend(friendId: Long, attributeName: String): FriendDTO {
+        val modifiedFriend = friendRepository.findByIdOrNull(friendId) ?: throw RuntimeException("Couldn't find user with id $friendId")
+        modifiedFriend.attributes?.remove(attributeName)
+        friendRepository.save(modifiedFriend)
+        return friendMapper.toDTO(modifiedFriend)
     }
 }

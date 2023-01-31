@@ -16,6 +16,6 @@ class Friend(
 
     var birthdayDate: LocalDate?,
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     var attributes: MutableMap<String, String?>?
-) {}
+)
