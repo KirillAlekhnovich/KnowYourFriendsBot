@@ -52,6 +52,7 @@ class UserService(
     fun addFriend(userId: Long, friendDTO: FriendDTO): UserDTO {
         val user = getUserById(userId)
         val friend = friendMapper.toEntity(friendService.createFriend(friendDTO))
+        if (friend.name[0] == '/') throw RuntimeException("Friend name cannot start with /")
         user.generalAttributes.forEach {
             friendService.addAttribute(friend.id, AttributeDTO(it, "Not set"))
         }
@@ -69,11 +70,18 @@ class UserService(
     fun addGeneralAttribute(userId: Long, attributeName: String) {
         val user = getUserById(userId)
         user.friends.forEach {
-            it.attributes[attributeName] = "Not set"
-            friendRepository.save(it)
+            if (!it.attributes.containsKey(attributeName)) {
+                it.attributes[attributeName] = "Not set"
+                friendRepository.save(it)
+            }
         }
         user.generalAttributes.add(attributeName)
         userRepository.save(user)
+    }
+
+    fun hasGeneralAttribute(userId: Long, attributeName: String): Boolean {
+        val user = getUserById(userId)
+        return user.generalAttributes.contains(attributeName)
     }
 
     fun removeGeneralAttribute(userId: Long, attributeName: String) {

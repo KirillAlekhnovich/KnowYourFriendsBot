@@ -53,6 +53,11 @@ class FriendController(
             .body(updatedFriendDTO)
     }
 
+    @GetMapping("/{friendId}/has_attribute/{attributeName}")
+    fun hasAttribute(@PathVariable friendId: Long, @PathVariable attributeName: String): ResponseEntity<Boolean> {
+        return ResponseEntity.ok(friendService.hasAttribute(friendId, attributeName))
+    }
+
     @DeleteMapping("/{friendId}/delete_attribute")
     fun deleteAttribute(@PathVariable friendId: Long, @RequestBody attributeName: String): ResponseEntity<FriendDTO> {
         val updatedFriendDTO: FriendDTO = friendService.deleteAttribute(friendId, attributeName)

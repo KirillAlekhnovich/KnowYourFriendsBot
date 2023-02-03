@@ -59,8 +59,8 @@ class UserController(
         return ResponseEntity.ok(userService.getAllFriends(userId))
     }
 
-    @PutMapping("/{userId}/remove_friend")
-    fun removeFriend(@PathVariable userId: Long, @RequestBody friendId: Long): ResponseEntity<UserDTO> {
+    @PutMapping("/{userId}/remove_friend/{friendId}")
+    fun removeFriend(@PathVariable userId: Long, @PathVariable friendId: Long): ResponseEntity<UserDTO> {
         val updatedUserDTO: UserDTO = userService.removeFriend(userId, friendId)
         return ResponseEntity
             .created(Link.of("${baseUrl}/users/${updatedUserDTO.id}").toUri())
@@ -71,6 +71,11 @@ class UserController(
     fun addGeneralAttribute(@PathVariable userId: Long, @RequestBody attributeName: String): ResponseEntity<Any> {
         userService.addGeneralAttribute(userId, attributeName)
         return ResponseEntity.ok("Attribute $attributeName has been added to all your friends")
+    }
+
+    @GetMapping("/{userId}/has_general_attribute/{attributeName}")
+    fun hasGeneralAttribute(@PathVariable userId: Long, @PathVariable attributeName: String): ResponseEntity<Boolean> {
+        return ResponseEntity.ok(userService.hasGeneralAttribute(userId, attributeName))
     }
 
     @DeleteMapping("/{userId}/remove_general_attribute")

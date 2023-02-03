@@ -5,6 +5,8 @@ import com.github.kittinunf.fuel.httpGet
 import com.github.kittinunf.fuel.httpPost
 import com.github.kittinunf.fuel.httpPut
 import com.beust.klaxon.Klaxon
+import com.github.kittinunf.fuel.core.ResponseResultOf
+import com.telegram.bot.dto.ResponseDTO
 import org.springframework.stereotype.Component
 
 @Component
@@ -12,38 +14,50 @@ class HttpRequestBuilder {
 
     private val klaxon = Klaxon()
 
-    fun get(url: String): String {
-        return url.httpGet().response().second.data.toString(Charsets.UTF_8)
+    fun getResponse(serverResponse: ResponseResultOf<ByteArray>): ResponseDTO {
+        return ResponseDTO(
+            serverResponse.second.data.toString(Charsets.UTF_8),
+            serverResponse.second.statusCode
+        )
     }
 
-    fun post(url: String): String {
-        return url.httpPost().response().second.data.toString(Charsets.UTF_8)
+    fun get(url: String): ResponseDTO {
+        return getResponse(url.httpGet().response())
     }
 
-    fun <T>post(url: String, obj: T): String {
-        val json = klaxon.toJsonString(obj)
-        val request = url.httpPost().body(json).header("Content-Type" to "application/json")
-        return request.response().second.data.toString(Charsets.UTF_8)
-    }
-
-    fun put(url: String): String {
-        return url.httpPut().response().second.data.toString(Charsets.UTF_8)
-    }
-
-    fun <T>put(url: String, obj: T): String {
+    fun <T>get(url: String, obj: T): ResponseDTO {
         val json = if (obj is String) obj
         else klaxon.toJsonString(obj)
-        val request = url.httpPut().body(json).header("Content-Type" to "application/json")
-        return request.response().second.data.toString(Charsets.UTF_8)
+        return getResponse(url.httpGet().body(json).header("Content-Type" to "application/json").response())
     }
 
-    fun delete(url: String): String {
-        return url.httpDelete().response().second.data.toString(Charsets.UTF_8)
+    fun post(url: String): ResponseDTO {
+        return getResponse(url.httpPost().response())
     }
 
-    fun <T>delete(url: String, obj: T): String {
-        val json = klaxon.toJsonString(obj)
-        val request = url.httpDelete().body(json).header("Content-Type" to "application/json")
-        return request.response().second.data.toString(Charsets.UTF_8)
+    fun <T>post(url: String, obj: T): ResponseDTO {
+        val json = if (obj is String) obj
+        else klaxon.toJsonString(obj)
+        return getResponse(url.httpPost().body(json).header("Content-Type" to "application/json").response())
+    }
+
+    fun put(url: String): ResponseDTO {
+        return getResponse(url.httpPut().response())
+    }
+
+    fun <T>put(url: String, obj: T): ResponseDTO {
+        val json = if (obj is String) obj
+        else klaxon.toJsonString(obj)
+        return getResponse(url.httpPut().body(json).header("Content-Type" to "application/json").response())
+    }
+
+    fun delete(url: String): ResponseDTO {
+        return getResponse(url.httpDelete().response())
+    }
+
+    fun <T>delete(url: String, obj: T): ResponseDTO {
+        val json = if (obj is String) obj
+        else klaxon.toJsonString(obj)
+        return getResponse(url.httpDelete().body(json).header("Content-Type" to "application/json").response())
     }
 }

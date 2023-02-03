@@ -48,9 +48,16 @@ class FriendService(
         return friendMapper.toDTO(modifiedFriend)
     }
 
+    fun hasAttribute(friendId: Long, attributeName: String): Boolean {
+        val modifiedFriend = friendRepository.findByIdOrNull(friendId)
+            ?: throw RuntimeException("Couldn't find user with id $friendId")
+        return modifiedFriend.attributes.containsKey(attributeName)
+    }
+
     fun deleteAttribute(friendId: Long, attributeName: String): FriendDTO {
         val modifiedFriend = friendRepository.findByIdOrNull(friendId)
             ?: throw RuntimeException("Couldn't find user with id $friendId")
+        if (!modifiedFriend.attributes.containsKey(attributeName)) throw RuntimeException("Friend does not have attribute $attributeName")
         modifiedFriend.attributes.remove(attributeName)
         friendRepository.save(modifiedFriend)
         return friendMapper.toDTO(modifiedFriend)
