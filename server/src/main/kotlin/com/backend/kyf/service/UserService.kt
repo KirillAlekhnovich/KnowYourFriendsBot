@@ -52,7 +52,6 @@ class UserService(
     fun addFriend(userId: Long, friendDTO: FriendDTO): UserDTO {
         val user = getUserById(userId)
         val friend = friendMapper.toEntity(friendService.createFriend(friendDTO))
-        println("I'm calling add attributes to friend ${friend.name}")
         user.generalAttributes.forEach {
             friendService.addAttribute(friend.id, AttributeDTO(it, "Not set"))
         }
