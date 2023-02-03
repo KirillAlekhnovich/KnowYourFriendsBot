@@ -1,9 +1,9 @@
-plugins {
-    kotlin("jvm") version "1.8.0"
-}
+import libs.Fuel.fuel
+import libs.Klaxon.klaxon
+import libs.Telegram.telegram
 
 dependencies {
-    implementation("org.telegram:telegrambots-spring-boot-starter:5.4.0.1")
-    implementation("com.github.kittinunf.fuel:fuel:2.3.1")
-    implementation("com.beust:klaxon:5.5")
+    fuel()
+    klaxon()
+    telegram()
 }
