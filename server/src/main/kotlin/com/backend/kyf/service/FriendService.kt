@@ -3,6 +3,9 @@ package com.backend.kyf.service
 import com.backend.kyf.dto.AttributeDTO
 import com.backend.kyf.dto.FriendDTO
 import com.backend.kyf.entity.Friend
+import com.backend.kyf.exception.AttributeAlreadyExistsException
+import com.backend.kyf.exception.AttributeDoesNotExistException
+import com.backend.kyf.exception.FriendDoesNotExistException
 import com.backend.kyf.repository.FriendRepository
 import com.backend.kyf.utils.FriendMapper
 import org.springframework.data.repository.findByIdOrNull
@@ -21,17 +24,24 @@ class FriendService(
     }
 
     fun getFriendById(friendId: Long): Friend {
-        return friendRepository.findByIdOrNull(friendId)
-            ?: throw RuntimeException("Couldn't find user with id $friendId")
+        return friendRepository.findByIdOrNull(friendId) ?: throw FriendDoesNotExistException()
     }
 
     fun getFriendDTOById(friendId: Long): FriendDTO {
         return friendMapper.toDTO(getFriendById(friendId))
     }
 
+    fun getFriendInfo(friendId: Long): String {
+        val friend = getFriendById(friendId)
+        val stringBuilder = StringBuilder()
+        for ((name, value) in friend.attributes) {
+            stringBuilder.append("\t$name: $value\n")
+        }
+        return "Friend - ${friend.name}:\n${stringBuilder}"
+    }
+
     fun updateFriend(friendId: Long, newFriendDTO: FriendDTO): FriendDTO {
-        val modifiedFriend = friendRepository.findByIdOrNull(friendId)
-            ?: throw RuntimeException("Couldn't find user with id $friendId")
+        val modifiedFriend = getFriendById(friendId)
         // TODO()
         return friendMapper.toDTO(modifiedFriend)
     }
@@ -41,23 +51,34 @@ class FriendService(
     }
 
     fun addAttribute(friendId: Long, attributeDTO: AttributeDTO): FriendDTO {
-        val modifiedFriend = friendRepository.findByIdOrNull(friendId)
-            ?: throw RuntimeException("Couldn't find user with id $friendId")
+        val modifiedFriend = getFriendById(friendId)
+        if (hasAttribute(friendId, attributeDTO.name)) throw AttributeAlreadyExistsException()
+        checkAttributeName(attributeDTO.name)
         modifiedFriend.attributes[attributeDTO.name] = attributeDTO.value
         friendRepository.save(modifiedFriend)
         return friendMapper.toDTO(modifiedFriend)
     }
 
+    fun updateAttribute(friendId: Long, attributeDTO: AttributeDTO): FriendDTO {
+        val modifiedFriend = getFriendById(friendId)
+        if (!hasAttribute(friendId, attributeDTO.name)) throw AttributeDoesNotExistException()
+        modifiedFriend.attributes[attributeDTO.name] = attributeDTO.value
+        friendRepository.save(modifiedFriend)
+        return friendMapper.toDTO(modifiedFriend)
+    }
+
+    fun checkAttributeName(attributeName: String) {
+        // TODO()
+    }
+
     fun hasAttribute(friendId: Long, attributeName: String): Boolean {
-        val modifiedFriend = friendRepository.findByIdOrNull(friendId)
-            ?: throw RuntimeException("Couldn't find user with id $friendId")
+        val modifiedFriend = getFriendById(friendId)
         return modifiedFriend.attributes.containsKey(attributeName)
     }
 
     fun deleteAttribute(friendId: Long, attributeName: String): FriendDTO {
-        val modifiedFriend = friendRepository.findByIdOrNull(friendId)
-            ?: throw RuntimeException("Couldn't find user with id $friendId")
-        if (!modifiedFriend.attributes.containsKey(attributeName)) throw RuntimeException("Friend does not have attribute $attributeName")
+        val modifiedFriend = getFriendById(friendId)
+        if (!hasAttribute(friendId, attributeName)) throw AttributeDoesNotExistException()
         modifiedFriend.attributes.remove(attributeName)
         friendRepository.save(modifiedFriend)
         return friendMapper.toDTO(modifiedFriend)

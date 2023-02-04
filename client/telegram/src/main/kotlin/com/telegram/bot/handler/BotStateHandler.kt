@@ -43,33 +43,22 @@ enum class BotStateHandler {
                     telegramBotStateDTO.state = EXPECTING_COMMAND
                     return try {
                         val friend = userRequestService.getFriendByName(user.id, message.text)
-                        val stringBuilder = StringBuilder()
-                        for ((name, value) in friend.attributes) {
-                            stringBuilder.append("\t$name: $value\n")
-                        }
-                        "Friend - ${friend.name}:\n${stringBuilder}"
+                        friendRequestService.getFriendInfo(friend.id)
                     } catch (e: RuntimeException) {
-                        "There is no friend with name ${message.text} in your friends list"
+                        e.message!!
                     }
                 }
                 BotCommandHandler.ADD_FRIEND -> {
                     telegramBotStateDTO.state = EXPECTING_COMMAND
-                    if (message.text[0] == '/') return "Friend name can not start with /"
-                    return try {
-                        userRequestService.addFriend(telegramBotStateDTO.id, FriendDTO(0, message.text, emptyMap<String, String?>().toMutableMap()))
-                        "Friend was successfully added"
-                    } catch (e: RuntimeException) {
-                        "There is already one ${message.text} in your friends list. Would you mind naming this friend different?"
-                    }
+                    return userRequestService.addFriend(telegramBotStateDTO.id, FriendDTO(0, message.text, emptyMap<String, String?>().toMutableMap()))
                 }
                 BotCommandHandler.REMOVE_FRIEND -> {
                     telegramBotStateDTO.state = EXPECTING_COMMAND
                     return try {
                         val friendId = userRequestService.getFriendByName(telegramBotStateDTO.id, message.text).id
-                        userRequestService.removeFriend(telegramBotStateDTO.id, friendId)
-                        "Friend was successfully removed"
+                        return userRequestService.removeFriend(telegramBotStateDTO.id, friendId)
                     } catch (e: RuntimeException) {
-                        "There is no friend with name ${message.text} in your friends list"
+                        e.message!!
                     }
                 }
                 BotCommandHandler.ADD_FRIENDS_ATTRIBUTE, BotCommandHandler.UPDATE_FRIENDS_ATTRIBUTE, BotCommandHandler.REMOVE_FRIENDS_ATTRIBUTE -> {
@@ -80,7 +69,7 @@ enum class BotStateHandler {
                         "Please enter attribute name"
                     } catch (e: RuntimeException) {
                         telegramBotStateDTO.state = EXPECTING_COMMAND
-                        "There is no friend with name ${message.text} in your friends list"
+                        e.message!!
                     }
                 }
                 else -> {
@@ -101,46 +90,34 @@ enum class BotStateHandler {
             when (telegramBotStateDTO.command) {
                 BotCommandHandler.CANCEL -> return cleanup(user, telegramBotStateDTO)
                 BotCommandHandler.ADD_FRIENDS_ATTRIBUTE -> {
-                    telegramBotStateDTO.storage["Attribute name"] = message.text
                     if (friendRequestService.hasAttribute(telegramBotStateDTO.storage["Friend id"]!!.toLong(), message.text)) {
                         telegramBotStateDTO.state = EXPECTING_COMMAND
                         return "Friend already has attribute with name ${message.text}. If you want to change it's value, please use /update_attribute command"
                     }
+                    telegramBotStateDTO.storage["Attribute name"] = message.text
                     telegramBotStateDTO.state = EXPECTING_ATTRIBUTE_VALUE
                     return "Please specify its value"
                 }
                 BotCommandHandler.UPDATE_FRIENDS_ATTRIBUTE -> {
-                    telegramBotStateDTO.storage["Attribute name"] = message.text
                     if (!friendRequestService.hasAttribute(telegramBotStateDTO.storage["Friend id"]!!.toLong(), message.text)) {
                         telegramBotStateDTO.state = EXPECTING_COMMAND
                         return "Friend doesn't have attribute with name ${message.text}. If you want to add it, please use /add_attribute command"
                     }
+                    telegramBotStateDTO.storage["Attribute name"] = message.text
                     telegramBotStateDTO.state = EXPECTING_ATTRIBUTE_VALUE
                     return "Please specify its new value"
                 }
                 BotCommandHandler.REMOVE_FRIENDS_ATTRIBUTE -> {
                     telegramBotStateDTO.state = EXPECTING_COMMAND
-                    if (!friendRequestService.hasAttribute(telegramBotStateDTO.storage["Friend id"]!!.toLong(), message.text)) {
-                        return "Friend doesn't have attribute with name ${message.text}."
-                    }
-                    friendRequestService.deleteAttribute(telegramBotStateDTO.storage["Friend id"]!!.toLong(), message.text)
-                    return "Attribute ${message.text} was successfully removed"
+                    return friendRequestService.deleteAttribute(telegramBotStateDTO.storage["Friend id"]!!.toLong(), message.text)
                 }
                 BotCommandHandler.ADD_GENERAL_ATTRIBUTE -> {
                     telegramBotStateDTO.state = EXPECTING_COMMAND
-                    if (userRequestService.hasGeneralAttribute(telegramBotStateDTO.id, message.text)) {
-                        return "You already have general attribute with name ${message.text}"
-                    }
-                    userRequestService.addGeneralAttribute(telegramBotStateDTO.id, message.text)
-                    return "Attribute was successfully added"
+                    return userRequestService.addGeneralAttribute(telegramBotStateDTO.id, message.text)
                 }
                 BotCommandHandler.REMOVE_GENERAL_ATTRIBUTE -> {
                     telegramBotStateDTO.state = EXPECTING_COMMAND
-                    if (!userRequestService.hasGeneralAttribute(telegramBotStateDTO.id, message.text)) {
-                        return "You don't have attribute with name ${message.text}."
-                    }
-                    userRequestService.removeGeneralAttribute(telegramBotStateDTO.id, message.text)
-                    return "Attribute ${message.text} was successfully removed"
+                    return userRequestService.removeGeneralAttribute(telegramBotStateDTO.id, message.text)
                 }
                 else -> {
                     telegramBotStateDTO.state = EXPECTING_COMMAND
@@ -159,13 +136,19 @@ enum class BotStateHandler {
         ): String {
             return when (telegramBotStateDTO.command) {
                 BotCommandHandler.CANCEL -> cleanup(user, telegramBotStateDTO)
-                BotCommandHandler.ADD_FRIENDS_ATTRIBUTE, BotCommandHandler.UPDATE_FRIENDS_ATTRIBUTE -> {
-                    friendRequestService.addAttribute(
+                BotCommandHandler.ADD_FRIENDS_ATTRIBUTE -> {
+                    telegramBotStateDTO.state = EXPECTING_COMMAND
+                    return friendRequestService.addAttribute(
                         telegramBotStateDTO.storage["Friend id"]!!.toLong(),
                         AttributeDTO(telegramBotStateDTO.storage["Attribute name"]!!, message.text)
                     )
+                }
+                BotCommandHandler.UPDATE_FRIENDS_ATTRIBUTE -> {
                     telegramBotStateDTO.state = EXPECTING_COMMAND
-                    "Attribute was successfully added/updated"
+                    return friendRequestService.updateAttribute(
+                        telegramBotStateDTO.storage["Friend id"]!!.toLong(),
+                        AttributeDTO(telegramBotStateDTO.storage["Attribute name"]!!, message.text)
+                    )
                 }
                 else -> {
                     telegramBotStateDTO.state = EXPECTING_COMMAND
