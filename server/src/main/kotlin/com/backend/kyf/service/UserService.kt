@@ -8,8 +8,9 @@ import com.backend.kyf.entity.User
 import com.backend.kyf.exception.*
 import com.backend.kyf.repository.FriendRepository
 import com.backend.kyf.repository.UserRepository
-import com.backend.kyf.utils.FriendMapper
-import com.backend.kyf.utils.UserMapper
+import com.backend.kyf.utils.CorrectnessChecker.isCorrect
+import com.backend.kyf.utils.mapper.FriendMapper
+import com.backend.kyf.utils.mapper.UserMapper
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 
@@ -53,7 +54,7 @@ class UserService(
     fun addFriend(userId: Long, friendDTO: FriendDTO): UserDTO {
         val user = getUserById(userId)
         val friend = friendMapper.toEntity(friendService.createFriend(friendDTO))
-        checkNameCorrectness(friend.name)
+        if (!friend.name.isCorrect()) throw InvalidFriendNameException()
         user.generalAttributes.forEach {
             friendService.addAttribute(friend.id, AttributeDTO(it, "Not set"))
         }
@@ -61,11 +62,6 @@ class UserService(
         user.friends.add(friend)
         userRepository.save(user)
         return userMapper.toDTO(user)
-    }
-
-    fun checkNameCorrectness(friendName: String) {
-        if (friendName[0] == '/') throw RuntimeException("Friend name cannot start with /")
-        // other checks
     }
 
     fun getFriendByName(userId: Long, friendName: String): FriendDTO {
@@ -89,8 +85,8 @@ class UserService(
 
     fun addGeneralAttribute(userId: Long, attributeName: String) {
         val user = getUserById(userId)
+        if (!attributeName.isCorrect()) throw InvalidAttributeNameException()
         if (hasGeneralAttribute(userId, attributeName)) throw AttributeAlreadyExistsException()
-        checkAttributeName(attributeName)
         user.friends.forEach {
             if (!it.attributes.containsKey(attributeName)) {
                 it.attributes[attributeName] = "Not set"
@@ -99,10 +95,6 @@ class UserService(
         }
         user.generalAttributes.add(attributeName)
         userRepository.save(user)
-    }
-
-    fun checkAttributeName(attributeName: String) {
-        // TODO()
     }
 
     fun hasGeneralAttribute(userId: Long, attributeName: String): Boolean {

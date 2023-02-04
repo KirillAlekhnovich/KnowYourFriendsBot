@@ -1,4 +1,4 @@
-package com.backend.kyf.utils
+package com.backend.kyf.utils.mapper
 
 interface Mapper<D, E> {
     fun toDTO(entity: E): D

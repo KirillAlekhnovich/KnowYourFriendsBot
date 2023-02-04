@@ -3,11 +3,10 @@ package com.backend.kyf.service
 import com.backend.kyf.dto.AttributeDTO
 import com.backend.kyf.dto.FriendDTO
 import com.backend.kyf.entity.Friend
-import com.backend.kyf.exception.AttributeAlreadyExistsException
-import com.backend.kyf.exception.AttributeDoesNotExistException
-import com.backend.kyf.exception.FriendDoesNotExistException
+import com.backend.kyf.exception.*
 import com.backend.kyf.repository.FriendRepository
-import com.backend.kyf.utils.FriendMapper
+import com.backend.kyf.utils.CorrectnessChecker.isCorrect
+import com.backend.kyf.utils.mapper.FriendMapper
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 
@@ -52,8 +51,8 @@ class FriendService(
 
     fun addAttribute(friendId: Long, attributeDTO: AttributeDTO): FriendDTO {
         val modifiedFriend = getFriendById(friendId)
+        if (!attributeDTO.name.isCorrect()) throw InvalidAttributeNameException()
         if (hasAttribute(friendId, attributeDTO.name)) throw AttributeAlreadyExistsException()
-        checkAttributeName(attributeDTO.name)
         modifiedFriend.attributes[attributeDTO.name] = attributeDTO.value
         friendRepository.save(modifiedFriend)
         return friendMapper.toDTO(modifiedFriend)
@@ -65,10 +64,6 @@ class FriendService(
         modifiedFriend.attributes[attributeDTO.name] = attributeDTO.value
         friendRepository.save(modifiedFriend)
         return friendMapper.toDTO(modifiedFriend)
-    }
-
-    fun checkAttributeName(attributeName: String) {
-        // TODO()
     }
 
     fun hasAttribute(friendId: Long, attributeName: String): Boolean {

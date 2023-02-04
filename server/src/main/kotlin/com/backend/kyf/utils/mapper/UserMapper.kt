@@ -1,4 +1,4 @@
-package com.backend.kyf.utils
+package com.backend.kyf.utils.mapper
 
 import com.backend.kyf.dto.FriendDTO
 import com.backend.kyf.dto.UserDTO
