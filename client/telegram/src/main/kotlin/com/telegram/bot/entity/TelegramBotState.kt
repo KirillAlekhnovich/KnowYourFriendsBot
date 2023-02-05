@@ -1,7 +1,7 @@
 package com.telegram.bot.entity
 
 import com.telegram.bot.handler.BotCommandHandler
-import com.telegram.bot.handler.BotStateHandler
+import com.telegram.bot.handler.BotState
 import javax.persistence.*
 
 
@@ -12,7 +12,7 @@ data class TelegramBotState(
 
     var command: BotCommandHandler,
 
-    var state: BotStateHandler,
+    var state: BotState,
 
     @ElementCollection(fetch = FetchType.EAGER)
     val storage: MutableMap<String, String>
