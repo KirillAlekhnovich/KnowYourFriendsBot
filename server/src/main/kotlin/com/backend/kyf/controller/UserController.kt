@@ -62,6 +62,11 @@ class UserController(
         )
     }
 
+    @GetMapping("/{userId}/friends/names")
+    fun getAllFriendNames(@PathVariable userId: Long): ResponseEntity<Any> {
+        return ResponseEntity.ok(generateResponseJson("List of friend names retrieved", userService.getFriendNames(userId)))
+    }
+
     @GetMapping("/{userId}/friends")
     fun getAllFriends(@PathVariable userId: Long): ResponseEntity<Any> {
         return ResponseEntity.ok(generateResponseJson("List of friends retrieved", userService.getAllFriends(userId)))

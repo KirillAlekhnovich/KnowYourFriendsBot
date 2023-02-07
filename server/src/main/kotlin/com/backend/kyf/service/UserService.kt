@@ -70,6 +70,11 @@ class UserService(
         return friendMapper.toDTO(friend)
     }
 
+    fun getFriendNames(userId: Long): List<String> {
+        val user = getUserById(userId)
+        return user.friends.map { it.name }
+    }
+
     fun getAllFriends(userId: Long): List<FriendDTO> {
         val user = getUserById(userId)
         return user.friends.map { friendMapper.toDTO(it) }

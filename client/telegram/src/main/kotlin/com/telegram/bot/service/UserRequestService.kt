@@ -34,6 +34,11 @@ class UserRequestService(
         return httpRequestBuilder.put(url).getMessage()
     }
 
+    fun getFriendNames(userId: Long): List<String> {
+        val url = "$usersEndpoint/$userId/friends/names"
+        return httpRequestBuilder.get(url).getStringListFromData()
+    }
+
     fun getFriendByName(userId: Long, friendName: String): FriendDTO {
         val url = "$usersEndpoint/$userId/friends/$friendName"
         return httpRequestBuilder.get(url).getFriendFromData()

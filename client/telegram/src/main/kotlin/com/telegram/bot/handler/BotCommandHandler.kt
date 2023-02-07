@@ -1,12 +1,15 @@
 package com.telegram.bot.handler
 
-import com.telegram.bot.dto.AttributeDTO
-import com.telegram.bot.dto.FriendDTO
-import com.telegram.bot.dto.TelegramBotStateDTO
-import com.telegram.bot.dto.UserDTO
+import com.telegram.bot.dto.*
 import com.telegram.bot.service.FriendRequestService
 import com.telegram.bot.service.UserRequestService
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow
+import java.util.ArrayList
 
 enum class BotCommandHandler {
     START {
@@ -20,17 +23,36 @@ enum class BotCommandHandler {
 
         override fun execute(
             user: UserDTO,
-            telegramBotStateDTO: TelegramBotStateDTO,
+            telegramBotState: TelegramBotStateDTO,
             message: String,
             userRequestService: UserRequestService,
             friendRequestService: FriendRequestService
-        ): String {
-            return "Hello! I'm Know Your Friends Bot. My goal is to keep detailed info about your friends for you. " +
-                    "Please, select one of the options below to continue"
+        ): List<ClientResponseDTO> {
+            return listOf(
+                ClientResponseDTO(
+                    "Hello! I'm Know Your Friends Bot. My goal is to keep detailed info about your friends for you. " +
+                            "Please, select one of the options below to continue", generateButtons(
+                        telegramBotState.state,
+                        user, telegramBotState, friendRequestService, userRequestService
+                    )
+                )
+            )
         }
 
-        override fun generateButtons(botState: BotState): ReplyKeyboard? {
-            return null
+        override fun generateButtons(
+            botState: BotState,
+            user: UserDTO,
+            telegramBotState: TelegramBotStateDTO,
+            friendRequestService: FriendRequestService,
+            userRequestService: UserRequestService
+        ): ReplyKeyboard {
+            return MAIN_MENU.generateButtons(
+                botState,
+                user,
+                telegramBotState,
+                friendRequestService,
+                userRequestService
+            )!!
         }
     },
     MAIN_MENU {
@@ -44,17 +66,49 @@ enum class BotCommandHandler {
 
         override fun execute(
             user: UserDTO,
-            telegramBotStateDTO: TelegramBotStateDTO,
+            telegramBotState: TelegramBotStateDTO,
             message: String,
             userRequestService: UserRequestService,
             friendRequestService: FriendRequestService
-        ): String {
-            telegramBotStateDTO.storage.clear()
-            return "You're back on main menu. Select one of the options below"
+        ): List<ClientResponseDTO> {
+            return listOf(
+                ClientResponseDTO(
+                    "You're back on main menu. Select one of the options below",
+                    generateButtons(
+                        telegramBotState.state,
+                        user,
+                        telegramBotState,
+                        friendRequestService,
+                        userRequestService
+                    )
+                )
+            )
         }
 
-        override fun generateButtons(botState: BotState): ReplyKeyboard? {
-            return null
+        override fun generateButtons(
+            botState: BotState,
+            user: UserDTO,
+            telegramBotState: TelegramBotStateDTO,
+            friendRequestService: FriendRequestService,
+            userRequestService: UserRequestService
+        ): ReplyKeyboard {
+            val buttons: MutableList<KeyboardRow> = ArrayList()
+            val row = KeyboardRow()
+
+            row.add(createKeyboardButton("Show friends"))
+            row.add(createKeyboardButton("Add attribute"))
+            row.add(createKeyboardButton("Help"))
+
+            buttons.add(createRowInstance(row).toKeyboardRow())
+            row.clear()
+
+            row.add(createKeyboardButton("Add friend"))
+            row.add(createKeyboardButton("Remove attribute"))
+            row.add(createKeyboardButton("Reset profile"))
+
+            buttons.add(createRowInstance(row).toKeyboardRow())
+
+            return createKeyboardMarkup(buttons)
         }
     },
     HELP {
@@ -68,16 +122,30 @@ enum class BotCommandHandler {
 
         override fun execute(
             user: UserDTO,
-            telegramBotStateDTO: TelegramBotStateDTO,
+            telegramBotState: TelegramBotStateDTO,
             message: String,
             userRequestService: UserRequestService,
             friendRequestService: FriendRequestService
-        ): String {
+        ): List<ClientResponseDTO> {
             val str = values().filter { it != UNKNOWN }.map { "/${it.toString().lowercase()} - ${it.description()}\n" }
-            return "Here you can see a list of all available commands:\n\n${str.joinToString(separator = "")}"
+            return listOf(
+                ClientResponseDTO(
+                    "Here you can see a list of all available commands:\n\n${
+                        str.joinToString(
+                            separator = ""
+                        )
+                    }"
+                )
+            )
         }
 
-        override fun generateButtons(botState: BotState): ReplyKeyboard? {
+        override fun generateButtons(
+            botState: BotState,
+            user: UserDTO,
+            telegramBotState: TelegramBotStateDTO,
+            friendRequestService: FriendRequestService,
+            userRequestService: UserRequestService
+        ): ReplyKeyboard? {
             return null
         }
     },
@@ -92,17 +160,35 @@ enum class BotCommandHandler {
 
         override fun execute(
             user: UserDTO,
-            telegramBotStateDTO: TelegramBotStateDTO,
+            telegramBotState: TelegramBotStateDTO,
             message: String,
             userRequestService: UserRequestService,
             friendRequestService: FriendRequestService
-        ): String {
+        ): List<ClientResponseDTO> {
+            telegramBotState.storage.clear()
             userRequestService.resetUser(user.id)
-            return "Your profile has been reset"
+            return listOf(
+                ClientResponseDTO(
+                    "Your profile has been reset",
+                    generateButtons(
+                        telegramBotState.state,
+                        user,
+                        telegramBotState,
+                        friendRequestService,
+                        userRequestService
+                    )
+                )
+            )
         }
 
-        override fun generateButtons(botState: BotState): ReplyKeyboard? {
-            return null
+        override fun generateButtons(
+            botState: BotState,
+            user: UserDTO,
+            telegramBotState: TelegramBotStateDTO,
+            friendRequestService: FriendRequestService,
+            userRequestService: UserRequestService
+        ): ReplyKeyboard? {
+            return MAIN_MENU.generateButtons(botState, user, telegramBotState, friendRequestService, userRequestService)
         }
     },
     LIST_FRIENDS {
@@ -116,22 +202,68 @@ enum class BotCommandHandler {
 
         override fun execute(
             user: UserDTO,
-            telegramBotStateDTO: TelegramBotStateDTO,
+            telegramBotState: TelegramBotStateDTO,
             message: String,
             userRequestService: UserRequestService,
             friendRequestService: FriendRequestService
-        ): String {
-            return if (user.friends.isEmpty()) "You have no friends :("
+        ): List<ClientResponseDTO> {
+            val friends = userRequestService.getFriendNames(user.id)
+            return if (friends.isEmpty()) listOf(
+                ClientResponseDTO(
+                    "You have no friends :(",
+                    generateButtons(
+                        telegramBotState.state,
+                        user,
+                        telegramBotState,
+                        friendRequestService,
+                        userRequestService
+                    )
+                )
+            )
             else {
                 val stringBuilder = StringBuilder()
+                stringBuilder.append("Here is a list of your friends:\n\n")
                 var index = 1
-                user.friends.map { stringBuilder.append("$index. ${it.name}\n"); index++ }
-                stringBuilder.toString()
+                friends.map { stringBuilder.append("$index. ${it}\n"); index++ }
+                listOf(
+                    ClientResponseDTO(
+                        stringBuilder.toString(),
+                        generateButtons(
+                            telegramBotState.state,
+                            user,
+                            telegramBotState,
+                            friendRequestService,
+                            userRequestService
+                        )
+                    )
+                )
             }
         }
 
-        override fun generateButtons(botState: BotState): ReplyKeyboard? {
-            return null
+        override fun generateButtons(
+            botState: BotState,
+            user: UserDTO,
+            telegramBotState: TelegramBotStateDTO,
+            friendRequestService: FriendRequestService,
+            userRequestService: UserRequestService
+        ): ReplyKeyboard {
+            val buttons: MutableList<MutableList<InlineKeyboardButton>> = ArrayList()
+            val row: MutableList<InlineKeyboardButton> = ArrayList()
+
+            row.add(createInlineButton("Previous page", "/previous_page"))
+            row.add(createInlineButton("Next page", "/next_page"))
+            if (userRequestService.getFriendNames(user.id).size > 10) buttons.add(createRowInstance(row))
+            row.clear()
+
+            row.add(createInlineButton("Add friend", ADD_FRIEND.toCommand()))
+            row.add(createInlineButton("Remove friend", REMOVE_FRIEND.toCommand()))
+            buttons.add(createRowInstance(row))
+            row.clear()
+
+            row.add(createInlineButton("Get friend info", FRIEND_INFO.toCommand()))
+            buttons.add(createRowInstance(row))
+
+            return createInlineMarkup(buttons)
         }
     },
     FRIEND_INFO {
@@ -143,33 +275,96 @@ enum class BotCommandHandler {
             return when (currState) {
                 BotState.EXPECTING_COMMAND -> BotState.EXPECTING_FRIEND_NAME
                 BotState.EXPECTING_FRIEND_NAME -> BotState.EXPECTING_COMMAND
+                BotState.EXECUTE_USING_STORAGE -> BotState.EXPECTING_COMMAND
                 else -> BotState.EXPECTING_COMMAND
             }
         }
 
         override fun execute(
             user: UserDTO,
-            telegramBotStateDTO: TelegramBotStateDTO,
+            telegramBotState: TelegramBotStateDTO,
             message: String,
             userRequestService: UserRequestService,
             friendRequestService: FriendRequestService
-        ): String {
-            return when (telegramBotStateDTO.state) {
-                BotState.EXPECTING_COMMAND -> "Please enter the name of the friend"
+        ): List<ClientResponseDTO> {
+            return when (telegramBotState.state) {
+                BotState.EXPECTING_COMMAND -> listOf(ClientResponseDTO("Please enter the name of the friend"))
                 BotState.EXPECTING_FRIEND_NAME -> {
                     try {
                         val friend = userRequestService.getFriendByName(user.id, message)
-                        friendRequestService.getFriendInfo(friend.id)
+                        addFriendIdToStorage(friend.id, telegramBotState)
+                        listOf(
+                            ClientResponseDTO(
+                                parseFriendInfo(friend.id, friendRequestService),
+                                generateButtons(
+                                    telegramBotState.state,
+                                    user,
+                                    telegramBotState,
+                                    friendRequestService,
+                                    userRequestService
+                                )
+                            )
+                        )
                     } catch (e: RuntimeException) {
-                        e.message!!
+                        listOf(ClientResponseDTO(e.message!!))
                     }
                 }
-                else -> UNKNOWN.execute(user, telegramBotStateDTO, message, userRequestService, friendRequestService)
+                BotState.EXECUTE_USING_STORAGE -> {
+                    try {
+                        val friendId = getFriendIdFromStorage(telegramBotState).toLong()
+                        listOf(
+                            ClientResponseDTO(
+                                parseFriendInfo(friendId, friendRequestService),
+                                generateButtons(
+                                    telegramBotState.state,
+                                    user,
+                                    telegramBotState,
+                                    friendRequestService,
+                                    userRequestService
+                                )
+                            )
+                        )
+                    } catch (e: RuntimeException) {
+                        listOf(ClientResponseDTO(e.message!!))
+                    }
+                }
+                else -> UNKNOWN.execute(user, telegramBotState, message, userRequestService, friendRequestService)
             }
         }
 
-        override fun generateButtons(botState: BotState): ReplyKeyboard? {
-            return null
+        override fun generateButtons(
+            botState: BotState,
+            user: UserDTO,
+            telegramBotState: TelegramBotStateDTO,
+            friendRequestService: FriendRequestService,
+            userRequestService: UserRequestService
+        ): ReplyKeyboard {
+            val buttons: MutableList<MutableList<InlineKeyboardButton>> = ArrayList()
+            val row: MutableList<InlineKeyboardButton> = ArrayList()
+
+            row.add(createInlineButton("Add attribute", ADD_FRIENDS_ATTRIBUTE.toCommand()))
+            row.add(createInlineButton("Update attribute", UPDATE_FRIENDS_ATTRIBUTE.toCommand()))
+            buttons.add(createRowInstance(row))
+            row.clear()
+
+            row.add(createInlineButton("Remove attribute", REMOVE_FRIENDS_ATTRIBUTE.toCommand()))
+            row.add(createInlineButton("Remove friend", REMOVE_FRIEND.toCommand()))
+            buttons.add(createRowInstance(row))
+            row.clear()
+
+            row.add(createInlineButton("Back to list", LIST_FRIENDS.toCommand()))
+            buttons.add(createRowInstance(row))
+
+            return createInlineMarkup(buttons)
+        }
+
+        private fun parseFriendInfo(friendId: Long, friendRequestService: FriendRequestService): String {
+            val friend = friendRequestService.getFriend(friendId)
+            val stringBuilder = StringBuilder()
+            for ((name, value) in friend.attributes) {
+                stringBuilder.append("\t$name: $value\n")
+            }
+            return "Friend - ${friend.name}:\n${stringBuilder}"
         }
     },
     ADD_FRIEND {
@@ -187,22 +382,36 @@ enum class BotCommandHandler {
 
         override fun execute(
             user: UserDTO,
-            telegramBotStateDTO: TelegramBotStateDTO,
+            telegramBotState: TelegramBotStateDTO,
             message: String,
             userRequestService: UserRequestService,
             friendRequestService: FriendRequestService
-        ): String {
-            return when (telegramBotStateDTO.state) {
-                BotState.EXPECTING_COMMAND -> "Please enter the name of the friend"
-                BotState.EXPECTING_FRIEND_NAME -> userRequestService.addFriend(
-                    telegramBotStateDTO.id,
-                    FriendDTO(0, message, emptyMap<String, String?>().toMutableMap())
-                )
-                else -> UNKNOWN.execute(user, telegramBotStateDTO, message, userRequestService, friendRequestService)
+        ): List<ClientResponseDTO> {
+            return when (telegramBotState.state) {
+                BotState.EXPECTING_COMMAND -> listOf(ClientResponseDTO("Please enter the name of the friend"))
+                BotState.EXPECTING_FRIEND_NAME -> {
+                    listOf(
+                        ClientResponseDTO(
+                            userRequestService.addFriend(
+                                telegramBotState.id,
+                                FriendDTO(0, message, emptyMap<String, String?>().toMutableMap())
+                            )
+                        ),
+                        LIST_FRIENDS.execute(user, telegramBotState, message, userRequestService, friendRequestService)
+                            .first()
+                    )
+                }
+                else -> UNKNOWN.execute(user, telegramBotState, message, userRequestService, friendRequestService)
             }
         }
 
-        override fun generateButtons(botState: BotState): ReplyKeyboard? {
+        override fun generateButtons(
+            botState: BotState,
+            user: UserDTO,
+            telegramBotState: TelegramBotStateDTO,
+            friendRequestService: FriendRequestService,
+            userRequestService: UserRequestService
+        ): ReplyKeyboard? {
             return null
         }
     },
@@ -221,26 +430,53 @@ enum class BotCommandHandler {
 
         override fun execute(
             user: UserDTO,
-            telegramBotStateDTO: TelegramBotStateDTO,
+            telegramBotState: TelegramBotStateDTO,
             message: String,
             userRequestService: UserRequestService,
             friendRequestService: FriendRequestService
-        ): String {
-            when (telegramBotStateDTO.state) {
-                BotState.EXPECTING_COMMAND -> return "Which friend would you like to remove?"
+        ): List<ClientResponseDTO> {
+            return when (telegramBotState.state) {
+                BotState.EXPECTING_COMMAND -> {
+                    if (telegramBotState.storage.containsKey("Friend id")) {
+                        telegramBotState.state = BotState.EXECUTE_USING_STORAGE
+                        REMOVE_FRIEND.execute(user, telegramBotState, message, userRequestService, friendRequestService)
+                    } else listOf(ClientResponseDTO("Which friend would you like to remove?"))
+                }
                 BotState.EXPECTING_FRIEND_NAME -> {
-                    return try {
-                        val friendId = userRequestService.getFriendByName(telegramBotStateDTO.id, message).id
-                        return userRequestService.removeFriend(telegramBotStateDTO.id, friendId)
+                    try {
+                        val friendId = userRequestService.getFriendByName(telegramBotState.id, message).id
+                        listOf(
+                            ClientResponseDTO(userRequestService.removeFriend(telegramBotState.id, friendId)),
+                            LIST_FRIENDS.execute(
+                                user,
+                                telegramBotState, message, userRequestService, friendRequestService
+                            ).first()
+                        )
                     } catch (e: RuntimeException) {
-                        e.message!!
+                        listOf(ClientResponseDTO(e.message!!))
                     }
                 }
-                else -> return UNKNOWN.execute(user, telegramBotStateDTO, message, userRequestService, friendRequestService)
+                BotState.EXECUTE_USING_STORAGE -> {
+                    val friendId = telegramBotState.storage["Friend id"]!!.toLong()
+                    listOf(
+                        ClientResponseDTO(userRequestService.removeFriend(telegramBotState.id, friendId)),
+                        LIST_FRIENDS.execute(
+                            user,
+                            telegramBotState, message, userRequestService, friendRequestService
+                        ).first()
+                    )
+                }
+                else -> UNKNOWN.execute(user, telegramBotState, message, userRequestService, friendRequestService)
             }
         }
 
-        override fun generateButtons(botState: BotState): ReplyKeyboard? {
+        override fun generateButtons(
+            botState: BotState,
+            user: UserDTO,
+            telegramBotState: TelegramBotStateDTO,
+            friendRequestService: FriendRequestService,
+            userRequestService: UserRequestService
+        ): ReplyKeyboard? {
             return null
         }
     },
@@ -251,8 +487,7 @@ enum class BotCommandHandler {
 
         override fun nextState(currState: BotState): BotState {
             return when (currState) {
-                BotState.EXPECTING_COMMAND -> BotState.EXPECTING_FRIEND_NAME
-                BotState.EXPECTING_FRIEND_NAME -> BotState.EXPECTING_ATTRIBUTE_NAME
+                BotState.EXPECTING_COMMAND -> BotState.EXPECTING_ATTRIBUTE_NAME
                 BotState.EXPECTING_ATTRIBUTE_NAME -> BotState.EXPECTING_ATTRIBUTE_VALUE
                 BotState.EXPECTING_ATTRIBUTE_VALUE -> BotState.EXPECTING_COMMAND
                 else -> BotState.EXPECTING_COMMAND
@@ -261,35 +496,69 @@ enum class BotCommandHandler {
 
         override fun execute(
             user: UserDTO,
-            telegramBotStateDTO: TelegramBotStateDTO,
+            telegramBotState: TelegramBotStateDTO,
             message: String,
             userRequestService: UserRequestService,
             friendRequestService: FriendRequestService
-        ): String {
-            when (telegramBotStateDTO.state) {
-                BotState.EXPECTING_COMMAND -> return "Whom you want the attribute to be added to?"
-                BotState.EXPECTING_FRIEND_NAME -> return addFriendIdToStorage(telegramBotStateDTO, message, userRequestService)
+        ): List<ClientResponseDTO> {
+            when (telegramBotState.state) {
+                BotState.EXPECTING_COMMAND -> return listOf(ClientResponseDTO("What attribute would you like to add?"))
                 BotState.EXPECTING_ATTRIBUTE_NAME -> {
-                    if (friendRequestService.hasAttribute(
-                            telegramBotStateDTO.storage["Friend id"]!!.toLong(),
-                            message
-                        )
-                    ) {
-                        telegramBotStateDTO.state = BotState.ERROR
-                        return "Friend already has attribute with name ${message}. If you want to change it's value, please use /update_attribute command"
+                    return try {
+                        val friendId = getFriendIdFromStorage(telegramBotState).toLong()
+                        if (friendRequestService.hasAttribute(friendId, message)) {
+                            telegramBotState.state = BotState.ERROR
+                            listOf(ClientResponseDTO("Friend already has attribute with name ${message}. If you want to change it's value, please use /update_attribute command"))
+                        }
+                        telegramBotState.storage["Attribute name"] = message
+                        listOf(ClientResponseDTO("Please specify its value"))
+                    } catch (e: RuntimeException) {
+                        telegramBotState.state = BotState.ERROR
+                        listOf(ClientResponseDTO(e.message!!))
                     }
-                    telegramBotStateDTO.storage["Attribute name"] = message
-                    return "Please specify its value"
                 }
-                BotState.EXPECTING_ATTRIBUTE_VALUE -> return friendRequestService.addAttribute(
-                    telegramBotStateDTO.storage["Friend id"]!!.toLong(),
-                    AttributeDTO(telegramBotStateDTO.storage["Attribute name"]!!, message)
+                BotState.EXPECTING_ATTRIBUTE_VALUE -> {
+                    return try {
+                        val friendId = getFriendIdFromStorage(telegramBotState).toLong()
+                        val attributeName = getAttributeNameFromStorage(telegramBotState)
+                        telegramBotState.state = BotState.EXECUTE_USING_STORAGE
+                        listOf(
+                            ClientResponseDTO(
+                                friendRequestService.addAttribute(
+                                    friendId,
+                                    AttributeDTO(attributeName, message)
+                                )
+                            ),
+                            FRIEND_INFO.execute(
+                                user,
+                                telegramBotState,
+                                message,
+                                userRequestService,
+                                friendRequestService
+                            ).first()
+                        )
+                    } catch (e: RuntimeException) {
+                        telegramBotState.state = BotState.ERROR
+                        listOf(ClientResponseDTO(e.message!!))
+                    }
+                }
+                else -> return UNKNOWN.execute(
+                    user,
+                    telegramBotState,
+                    message,
+                    userRequestService,
+                    friendRequestService
                 )
-                else -> return UNKNOWN.execute(user, telegramBotStateDTO, message, userRequestService, friendRequestService)
             }
         }
 
-        override fun generateButtons(botState: BotState): ReplyKeyboard? {
+        override fun generateButtons(
+            botState: BotState,
+            user: UserDTO,
+            telegramBotState: TelegramBotStateDTO,
+            friendRequestService: FriendRequestService,
+            userRequestService: UserRequestService
+        ): ReplyKeyboard? {
             return null
         }
     },
@@ -300,8 +569,7 @@ enum class BotCommandHandler {
 
         override fun nextState(currState: BotState): BotState {
             return when (currState) {
-                BotState.EXPECTING_COMMAND -> BotState.EXPECTING_FRIEND_NAME
-                BotState.EXPECTING_FRIEND_NAME -> BotState.EXPECTING_ATTRIBUTE_NAME
+                BotState.EXPECTING_COMMAND -> BotState.EXPECTING_ATTRIBUTE_NAME
                 BotState.EXPECTING_ATTRIBUTE_NAME -> BotState.EXPECTING_ATTRIBUTE_VALUE
                 BotState.EXPECTING_ATTRIBUTE_VALUE -> BotState.EXPECTING_COMMAND
                 else -> BotState.EXPECTING_COMMAND
@@ -310,32 +578,79 @@ enum class BotCommandHandler {
 
         override fun execute(
             user: UserDTO,
-            telegramBotStateDTO: TelegramBotStateDTO,
+            telegramBotState: TelegramBotStateDTO,
             message: String,
             userRequestService: UserRequestService,
             friendRequestService: FriendRequestService
-        ): String {
-            when (telegramBotStateDTO.state) {
-                BotState.EXPECTING_COMMAND -> return "Whom's attribute would you like to update?"
-                BotState.EXPECTING_FRIEND_NAME -> return addFriendIdToStorage(telegramBotStateDTO, message, userRequestService)
-                BotState.EXPECTING_ATTRIBUTE_NAME -> {
-                    if (!friendRequestService.hasAttribute(telegramBotStateDTO.storage["Friend id"]!!.toLong(), message)) {
-                        telegramBotStateDTO.state = BotState.ERROR
-                        return "Friend doesn't have attribute with name ${message}. If you want to add it, please use /add_attribute command"
-                    }
-                    telegramBotStateDTO.storage["Attribute name"] = message
-                    return "Please specify its new value"
-                }
-                BotState.EXPECTING_ATTRIBUTE_VALUE -> return friendRequestService.updateAttribute(
-                    telegramBotStateDTO.storage["Friend id"]!!.toLong(),
-                    AttributeDTO(telegramBotStateDTO.storage["Attribute name"]!!, message)
+        ): List<ClientResponseDTO> {
+            when (telegramBotState.state) {
+                BotState.EXPECTING_COMMAND -> return listOf(
+                    ClientResponseDTO(
+                        "What attribute would you like to update?",
+                        generateButtons(
+                            BotState.EXPECTING_COMMAND,
+                            user,
+                            telegramBotState,
+                            friendRequestService,
+                            userRequestService
+                        )
+                    )
                 )
-                else -> return UNKNOWN.execute(user, telegramBotStateDTO, message, userRequestService, friendRequestService)
+                BotState.EXPECTING_ATTRIBUTE_NAME -> {
+                    return try {
+                        val friendId = getFriendIdFromStorage(telegramBotState).toLong()
+                        if (!friendRequestService.hasAttribute(friendId, message)) {
+                            telegramBotState.state = BotState.ERROR
+                            listOf(ClientResponseDTO("Friend doesn't have attribute with name ${message}. If you want to add it, please use /add_attribute command"))
+                        } else {
+                            telegramBotState.storage["Attribute name"] = message
+                            listOf(ClientResponseDTO("Please specify its new value"))
+                        }
+                    } catch (e: RuntimeException) {
+                        telegramBotState.state = BotState.ERROR
+                        listOf(ClientResponseDTO(e.message!!))
+                    }
+                }
+                BotState.EXPECTING_ATTRIBUTE_VALUE -> {
+                    return try {
+                        val friendId = getFriendIdFromStorage(telegramBotState).toLong()
+                        val attributeName = getAttributeNameFromStorage(telegramBotState)
+                        telegramBotState.state = BotState.EXECUTE_USING_STORAGE
+                        listOf(
+                            ClientResponseDTO(
+                                friendRequestService.updateAttribute(
+                                    friendId,
+                                    AttributeDTO(attributeName, message)
+                                )
+                            ),
+                            FRIEND_INFO.execute(
+                                user,
+                                telegramBotState, message, userRequestService, friendRequestService
+                            ).first()
+                        )
+                    } catch (e: RuntimeException) {
+                        telegramBotState.state = BotState.ERROR
+                        listOf(ClientResponseDTO(e.message!!))
+                    }
+                }
+                else -> return UNKNOWN.execute(
+                    user,
+                    telegramBotState,
+                    message,
+                    userRequestService,
+                    friendRequestService
+                )
             }
         }
 
-        override fun generateButtons(botState: BotState): ReplyKeyboard? {
-            return null
+        override fun generateButtons(
+            botState: BotState,
+            user: UserDTO,
+            telegramBotState: TelegramBotStateDTO,
+            friendRequestService: FriendRequestService,
+            userRequestService: UserRequestService
+        ): ReplyKeyboard? {
+            return createAttributesMarkup(telegramBotState, friendRequestService)
         }
     },
     REMOVE_FRIENDS_ATTRIBUTE {
@@ -345,8 +660,7 @@ enum class BotCommandHandler {
 
         override fun nextState(currState: BotState): BotState {
             return when (currState) {
-                BotState.EXPECTING_COMMAND -> BotState.EXPECTING_FRIEND_NAME
-                BotState.EXPECTING_FRIEND_NAME -> BotState.EXPECTING_ATTRIBUTE_NAME
+                BotState.EXPECTING_COMMAND -> BotState.EXPECTING_ATTRIBUTE_NAME
                 BotState.EXPECTING_ATTRIBUTE_NAME -> BotState.EXPECTING_COMMAND
                 else -> BotState.EXPECTING_COMMAND
             }
@@ -354,21 +668,52 @@ enum class BotCommandHandler {
 
         override fun execute(
             user: UserDTO,
-            telegramBotStateDTO: TelegramBotStateDTO,
+            telegramBotState: TelegramBotStateDTO,
             message: String,
             userRequestService: UserRequestService,
             friendRequestService: FriendRequestService
-        ): String {
-            return when (telegramBotStateDTO.state) {
-                BotState.EXPECTING_COMMAND -> "Which friend's attribute would you like to remove?"
-                BotState.EXPECTING_FRIEND_NAME -> addFriendIdToStorage(telegramBotStateDTO, message, userRequestService)
-                BotState.EXPECTING_ATTRIBUTE_NAME -> friendRequestService.deleteAttribute(telegramBotStateDTO.storage["Friend id"]!!.toLong(), message)
-                else -> UNKNOWN.execute(user, telegramBotStateDTO, message, userRequestService, friendRequestService)
+        ): List<ClientResponseDTO> {
+            return when (telegramBotState.state) {
+                BotState.EXPECTING_COMMAND -> listOf(
+                    ClientResponseDTO(
+                        "What attribute would you like to remove?",
+                        generateButtons(
+                            BotState.EXPECTING_COMMAND,
+                            user,
+                            telegramBotState,
+                            friendRequestService,
+                            userRequestService
+                        )
+                    )
+                )
+                BotState.EXPECTING_ATTRIBUTE_NAME -> {
+                    return try {
+                        val friendId = getFriendIdFromStorage(telegramBotState).toLong()
+                        telegramBotState.state = BotState.EXECUTE_USING_STORAGE
+                        listOf(
+                            ClientResponseDTO(friendRequestService.deleteAttribute(friendId, message)),
+                            FRIEND_INFO.execute(
+                                user,
+                                telegramBotState, message, userRequestService, friendRequestService
+                            ).first()
+                        )
+                    } catch (e: RuntimeException) {
+                        telegramBotState.state = BotState.ERROR
+                        listOf(ClientResponseDTO(e.message!!))
+                    }
+                }
+                else -> UNKNOWN.execute(user, telegramBotState, message, userRequestService, friendRequestService)
             }
         }
 
-        override fun generateButtons(botState: BotState): ReplyKeyboard? {
-            return null
+        override fun generateButtons(
+            botState: BotState,
+            user: UserDTO,
+            telegramBotState: TelegramBotStateDTO,
+            friendRequestService: FriendRequestService,
+            userRequestService: UserRequestService
+        ): ReplyKeyboard? {
+            return createAttributesMarkup(telegramBotState, friendRequestService)
         }
     },
     ADD_GENERAL_ATTRIBUTE {
@@ -386,19 +731,31 @@ enum class BotCommandHandler {
 
         override fun execute(
             user: UserDTO,
-            telegramBotStateDTO: TelegramBotStateDTO,
+            telegramBotState: TelegramBotStateDTO,
             message: String,
             userRequestService: UserRequestService,
             friendRequestService: FriendRequestService
-        ): String {
-            return when (telegramBotStateDTO.state) {
-                BotState.EXPECTING_COMMAND -> "What attribute would you like to add?"
-                BotState.EXPECTING_ATTRIBUTE_NAME -> userRequestService.addGeneralAttribute(telegramBotStateDTO.id, message)
-                else -> UNKNOWN.execute(user, telegramBotStateDTO, message, userRequestService, friendRequestService)
+        ): List<ClientResponseDTO> {
+            return when (telegramBotState.state) {
+                BotState.EXPECTING_COMMAND -> listOf(ClientResponseDTO("What attribute would you like to add?"))
+                BotState.EXPECTING_ATTRIBUTE_NAME -> listOf(
+                    ClientResponseDTO(
+                        userRequestService.addGeneralAttribute(
+                            telegramBotState.id, message
+                        )
+                    )
+                )
+                else -> UNKNOWN.execute(user, telegramBotState, message, userRequestService, friendRequestService)
             }
         }
 
-        override fun generateButtons(botState: BotState): ReplyKeyboard? {
+        override fun generateButtons(
+            botState: BotState,
+            user: UserDTO,
+            telegramBotState: TelegramBotStateDTO,
+            friendRequestService: FriendRequestService,
+            userRequestService: UserRequestService
+        ): ReplyKeyboard? {
             return null
         }
     },
@@ -417,19 +774,31 @@ enum class BotCommandHandler {
 
         override fun execute(
             user: UserDTO,
-            telegramBotStateDTO: TelegramBotStateDTO,
+            telegramBotState: TelegramBotStateDTO,
             message: String,
             userRequestService: UserRequestService,
             friendRequestService: FriendRequestService
-        ): String {
-            return when (telegramBotStateDTO.state) {
-                BotState.EXPECTING_COMMAND -> "What attribute would you like to remove?"
-                BotState.EXPECTING_ATTRIBUTE_NAME -> userRequestService.removeGeneralAttribute(telegramBotStateDTO.id, message)
-                else -> UNKNOWN.execute(user, telegramBotStateDTO, message, userRequestService, friendRequestService)
+        ): List<ClientResponseDTO> {
+            return when (telegramBotState.state) {
+                BotState.EXPECTING_COMMAND -> listOf(ClientResponseDTO("What attribute would you like to remove?"))
+                BotState.EXPECTING_ATTRIBUTE_NAME -> listOf(
+                    ClientResponseDTO(
+                        userRequestService.removeGeneralAttribute(
+                            telegramBotState.id, message
+                        )
+                    )
+                )
+                else -> UNKNOWN.execute(user, telegramBotState, message, userRequestService, friendRequestService)
             }
         }
 
-        override fun generateButtons(botState: BotState): ReplyKeyboard? {
+        override fun generateButtons(
+            botState: BotState,
+            user: UserDTO,
+            telegramBotState: TelegramBotStateDTO,
+            friendRequestService: FriendRequestService,
+            userRequestService: UserRequestService
+        ): ReplyKeyboard? {
             return null
         }
     },
@@ -444,15 +813,21 @@ enum class BotCommandHandler {
 
         override fun execute(
             user: UserDTO,
-            telegramBotStateDTO: TelegramBotStateDTO,
+            telegramBotState: TelegramBotStateDTO,
             message: String,
             userRequestService: UserRequestService,
             friendRequestService: FriendRequestService
-        ): String {
-            return "I don't know this command. You can check available commands by typing /help"
+        ): List<ClientResponseDTO> {
+            return listOf(ClientResponseDTO("I don't know this command. You can check available commands by typing /help"))
         }
 
-        override fun generateButtons(botState: BotState): ReplyKeyboard? {
+        override fun generateButtons(
+            botState: BotState,
+            user: UserDTO,
+            telegramBotState: TelegramBotStateDTO,
+            friendRequestService: FriendRequestService,
+            userRequestService: UserRequestService
+        ): ReplyKeyboard? {
             return null
         }
     };
@@ -463,22 +838,105 @@ enum class BotCommandHandler {
 
     abstract fun execute(
         user: UserDTO,
-        telegramBotStateDTO: TelegramBotStateDTO,
+        telegramBotState: TelegramBotStateDTO,
         message: String,
         userRequestService: UserRequestService,
         friendRequestService: FriendRequestService
-    ): String
+    ): List<ClientResponseDTO>
 
-    abstract fun generateButtons(botState: BotState): ReplyKeyboard?
+    abstract fun generateButtons(
+        botState: BotState,
+        user: UserDTO,
+        telegramBotState: TelegramBotStateDTO,
+        friendRequestService: FriendRequestService,
+        userRequestService: UserRequestService
+    ): ReplyKeyboard?
 
-    fun addFriendIdToStorage(telegramBotStateDTO: TelegramBotStateDTO, message: String, userRequestService: UserRequestService): String {
+    fun createInlineButton(text: String, callback: String? = null): InlineKeyboardButton {
+        val button = InlineKeyboardButton()
+        button.text = text
+        button.callbackData = callback ?: text
+        return button
+    }
+
+    fun createKeyboardButton(text: String): KeyboardButton {
+        val button = KeyboardButton()
+        button.text = text
+        return button
+    }
+
+    fun <T> createRowInstance(buttons: MutableList<T>): MutableList<T> {
+        val row: MutableList<T> = ArrayList()
+        row.addAll(buttons)
+        return row
+    }
+
+    fun createInlineMarkup(buttons: List<MutableList<InlineKeyboardButton>>): ReplyKeyboard {
+        val markup = InlineKeyboardMarkup()
+        markup.keyboard = buttons
+        return markup
+    }
+
+    fun createKeyboardMarkup(buttons: List<KeyboardRow>): ReplyKeyboard {
+        val markup = ReplyKeyboardMarkup()
+        markup.keyboard = buttons
+        markup.resizeKeyboard = true
+        return markup
+    }
+
+    fun createAttributesMarkup(
+        telegramBotState: TelegramBotStateDTO,
+        friendRequestService: FriendRequestService
+    ): ReplyKeyboard? {
         return try {
-            val friend = userRequestService.getFriendByName(telegramBotStateDTO.id, message).id
-            telegramBotStateDTO.storage["Friend id"] = friend.toString()
-            "Please enter attribute name"
-        } catch (e: RuntimeException) {
-            telegramBotStateDTO.state = BotState.ERROR
-            e.message!!
+            val friendId = getFriendIdFromStorage(telegramBotState).toLong()
+            val friendAttributes = friendRequestService.getAttributeNames(friendId)
+            val buttons: MutableList<MutableList<InlineKeyboardButton>> = ArrayList()
+            val row: MutableList<InlineKeyboardButton> = ArrayList()
+            val numberOfColumns = 2
+            var split = 1
+            friendAttributes.forEach {
+                row.add(createInlineButton(it))
+                if (split % numberOfColumns == 0) {
+                    buttons.add(createRowInstance(row))
+                    row.clear()
+                }
+                split++
+            }
+            row.add(createInlineButton("Back", "${FRIEND_INFO.toCommand()}_storage"))
+            if (row.isNotEmpty()) buttons.add(row)
+            createInlineMarkup(buttons)
+        } catch (e: Exception) {
+            null
         }
     }
+
+    fun addFriendIdToStorage(friendId: Long, telegramBotStateDTO: TelegramBotStateDTO) {
+        telegramBotStateDTO.storage["Friend id"] = friendId.toString()
+    }
+
+    private fun getParameterFromStorage(parameter: String, telegramBotStateDTO: TelegramBotStateDTO): String {
+        if (!telegramBotStateDTO.storage.containsKey(parameter)) {
+            throw RuntimeException("I can't determine $parameter. Please try again")
+        }
+        return telegramBotStateDTO.storage[parameter]!!
+    }
+
+    fun getFriendIdFromStorage(telegramBotStateDTO: TelegramBotStateDTO): String {
+        return getParameterFromStorage("Friend id", telegramBotStateDTO)
+    }
+
+    fun getAttributeNameFromStorage(telegramBotStateDTO: TelegramBotStateDTO): String {
+        return getParameterFromStorage("Attribute name", telegramBotStateDTO)
+    }
+}
+
+fun BotCommandHandler.toCommand(): String {
+    return "/${this.name.lowercase()}"
+}
+
+fun MutableList<KeyboardButton>.toKeyboardRow(): KeyboardRow {
+    val row = KeyboardRow()
+    row.addAll(this)
+    return row
 }

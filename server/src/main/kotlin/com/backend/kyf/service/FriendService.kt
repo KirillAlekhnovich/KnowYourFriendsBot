@@ -30,15 +30,6 @@ class FriendService(
         return friendMapper.toDTO(getFriendById(friendId))
     }
 
-    fun getFriendInfo(friendId: Long): String {
-        val friend = getFriendById(friendId)
-        val stringBuilder = StringBuilder()
-        for ((name, value) in friend.attributes) {
-            stringBuilder.append("\t$name: $value\n")
-        }
-        return "Friend - ${friend.name}:\n${stringBuilder}"
-    }
-
     fun updateFriend(friendId: Long, newFriendDTO: FriendDTO): FriendDTO {
         val modifiedFriend = getFriendById(friendId)
         // TODO()
@@ -56,6 +47,24 @@ class FriendService(
         modifiedFriend.attributes[attributeDTO.name] = attributeDTO.value
         friendRepository.save(modifiedFriend)
         return friendMapper.toDTO(modifiedFriend)
+    }
+
+    fun getAttributes(friendId: Long): List<AttributeDTO> {
+        val modifiedFriend = getFriendById(friendId)
+        val attributes = mutableListOf<AttributeDTO>()
+        for ((name, value) in modifiedFriend.attributes) {
+            attributes.add(AttributeDTO(name, value))
+        }
+        return attributes
+    }
+
+    fun getAttributeNames(friendId: Long): List<String> {
+        val modifiedFriend = getFriendById(friendId)
+        val attributeNames = mutableListOf<String>()
+        for ((name, _) in modifiedFriend.attributes) {
+            attributeNames.add(name)
+        }
+        return attributeNames
     }
 
     fun updateAttribute(friendId: Long, attributeDTO: AttributeDTO): FriendDTO {

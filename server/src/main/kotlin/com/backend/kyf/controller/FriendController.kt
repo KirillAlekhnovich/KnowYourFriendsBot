@@ -33,11 +33,6 @@ class FriendController(
         return ResponseEntity.ok(generateResponseJson("Friend retrieved", friendService.getFriendDTOById(friendId)))
     }
 
-    @GetMapping("/{friendId}/info")
-    fun getFriendInfo(@PathVariable friendId: Long): ResponseEntity<Any> {
-        return ResponseEntity.ok(generateResponseJson("Friend info retrieved", friendService.getFriendInfo(friendId)))
-    }
-
     @PutMapping("/{friendId}/update")
     fun updateFriend(@PathVariable friendId: Long, @RequestBody newFriendDTO: FriendDTO): ResponseEntity<Any> {
         return ResponseEntity.ok(generateResponseJson("Friend updated", friendService.updateFriend(friendId, newFriendDTO)))
@@ -51,6 +46,16 @@ class FriendController(
     @PutMapping("/{friendId}/add_attribute")
     fun addAttribute(@PathVariable friendId: Long, @RequestBody attributeDTO: AttributeDTO): ResponseEntity<Any> {
         return ResponseEntity.ok(generateResponseJson("Attribute added", friendService.addAttribute(friendId, attributeDTO)))
+    }
+
+    @GetMapping("/{friendId}/attributes")
+    fun getAttributes(@PathVariable friendId: Long): ResponseEntity<Any> {
+        return ResponseEntity.ok(generateResponseJson("Attributes retrieved", friendService.getAttributes(friendId)))
+    }
+
+    @GetMapping("/{friendId}/attribute_names")
+    fun getAttributeNames(@PathVariable friendId: Long): ResponseEntity<Any> {
+        return ResponseEntity.ok(generateResponseJson("Attribute names retrieved", friendService.getAttributeNames(friendId)))
     }
 
     @PutMapping("/{friendId}/update_attribute")

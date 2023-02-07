@@ -1,11 +1,13 @@
 package com.telegram.bot.utils
 
 import com.telegram.bot.dto.TelegramBotStateDTO
+import com.telegram.bot.dto.UserDTO
 import com.telegram.bot.handler.BotCommandHandler
 import com.telegram.bot.handler.BotState
 import com.telegram.bot.service.FriendRequestService
 import com.telegram.bot.service.TelegramBotStateService
 import com.telegram.bot.service.UserRequestService
+import com.telegram.bot.utils.CommandParser.getState
 import com.telegram.bot.utils.CommandParser.isCommand
 import com.telegram.bot.utils.CommandParser.toCommand
 import org.springframework.beans.factory.annotation.Value
@@ -13,7 +15,6 @@ import org.springframework.stereotype.Service
 import org.telegram.telegrambots.bots.TelegramLongPollingBot
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.objects.Update
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard
 import java.util.*
 
 @Service
@@ -40,18 +41,18 @@ class TelegramBotConfig(
             telegramBotStateService.getBotStateById(chatId)
         } else {
             telegramBotStateService.createBotState(
-                TelegramBotStateDTO(chatId, BotCommandHandler.START,
-                BotState.EXPECTING_COMMAND, emptyMap<String, String>().toMutableMap())
+                TelegramBotStateDTO(
+                    chatId, BotCommandHandler.START,
+                    BotState.EXPECTING_COMMAND, emptyMap<String, String>().toMutableMap()
+                )
             )
         }
         val user = userRequestService.getUser(botState.id)
         if (message.isCommand()) {
-            botState.state = BotState.EXPECTING_COMMAND
+            botState.state = message.getState()
             botState.command = message.toCommand()
         }
-        val response = botState.command.execute(user, botState, message, userRequestService, friendRequestService)
-        val markup = botState.command.generateButtons(botState.state)
-        sendResponse(botState.id, response, markup)
+        sendResponse(botState.id, botState, user, message)
         botState.state = botState.command.nextState(botState.state)
         telegramBotStateService.createBotState(botState)
     }
@@ -69,9 +70,12 @@ class TelegramBotConfig(
         return Pair(chatId, message)
     }
 
-    private fun sendResponse(chatId: Long, response: String, replyMarkup: ReplyKeyboard?) {
-        val responseMsg = SendMessage(chatId.toString(), response)
-        if (replyMarkup != null) responseMsg.replyMarkup = replyMarkup
-        execute(responseMsg)
+    private fun sendResponse(chatId: Long, botState: TelegramBotStateDTO, user: UserDTO, message: String) {
+        val response = botState.command.execute(user, botState, message, userRequestService, friendRequestService)
+        response.forEach {
+            val responseMsg = SendMessage(chatId.toString(), it.message)
+            responseMsg.replyMarkup = it.markup
+            execute(responseMsg)
+        }
     }
 }
