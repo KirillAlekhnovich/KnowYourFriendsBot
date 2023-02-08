@@ -74,6 +74,7 @@ class TelegramBotConfig(
         val response = botState.command.execute(user, botState, message, userRequestService, friendRequestService)
         response.forEach {
             val responseMsg = SendMessage(chatId.toString(), it.message)
+            responseMsg.enableMarkdown(true)
             responseMsg.replyMarkup = it.markup
             execute(responseMsg)
         }

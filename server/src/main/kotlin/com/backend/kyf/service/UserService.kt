@@ -72,12 +72,12 @@ class UserService(
 
     fun getFriendNames(userId: Long): List<String> {
         val user = getUserById(userId)
-        return user.friends.map { it.name }
+        return user.friends.map { it.name }.sorted()
     }
 
     fun getAllFriends(userId: Long): List<FriendDTO> {
         val user = getUserById(userId)
-        return user.friends.map { friendMapper.toDTO(it) }
+        return user.friends.map { friendMapper.toDTO(it) }.sortedBy { it.name }
     }
 
     fun removeFriend(userId: Long, friendId: Long): UserDTO {

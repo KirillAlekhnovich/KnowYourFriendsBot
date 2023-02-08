@@ -222,7 +222,7 @@ enum class BotCommandHandler {
             )
             else {
                 val stringBuilder = StringBuilder()
-                stringBuilder.append("Here is a list of your friends:\n\n")
+                stringBuilder.append("List of your friends:\n\n")
                 var index = 1
                 friends.map { stringBuilder.append("$index. ${it}\n"); index++ }
                 listOf(
@@ -360,11 +360,13 @@ enum class BotCommandHandler {
 
         private fun parseFriendInfo(friendId: Long, friendRequestService: FriendRequestService): String {
             val friend = friendRequestService.getFriend(friendId)
+            val attributes = friendRequestService.getAttributes(friendId)
             val stringBuilder = StringBuilder()
-            for ((name, value) in friend.attributes) {
+            for ((name, value) in attributes) {
                 stringBuilder.append("\t$name: $value\n")
             }
-            return "Friend - ${friend.name}:\n${stringBuilder}"
+            if (stringBuilder.isEmpty()) stringBuilder.append("\tFriend has no attributes")
+            return "Info about your friend *${friend.name}*:\n${stringBuilder}"
         }
     },
     ADD_FRIEND {

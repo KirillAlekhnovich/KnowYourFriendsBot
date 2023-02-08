@@ -55,7 +55,7 @@ class FriendService(
         for ((name, value) in modifiedFriend.attributes) {
             attributes.add(AttributeDTO(name, value))
         }
-        return attributes
+        return attributes.sortedBy { it.name }
     }
 
     fun getAttributeNames(friendId: Long): List<String> {
@@ -64,7 +64,7 @@ class FriendService(
         for ((name, _) in modifiedFriend.attributes) {
             attributeNames.add(name)
         }
-        return attributeNames
+        return attributeNames.sorted()
     }
 
     fun updateAttribute(friendId: Long, attributeDTO: AttributeDTO): FriendDTO {
