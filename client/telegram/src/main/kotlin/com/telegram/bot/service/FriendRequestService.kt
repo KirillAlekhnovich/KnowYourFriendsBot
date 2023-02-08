@@ -15,7 +15,7 @@ class FriendRequestService(
 
     fun getFriend(friendId: Long): FriendDTO {
         val url = "$friendsEndpoint/$friendId"
-        return httpRequestBuilder.get(url).getFriendFromData()
+        return httpRequestBuilder.get(url).getObjectFromData()
     }
 
     fun addAttribute(friendId: Long, attribute: AttributeDTO): String {
@@ -23,9 +23,14 @@ class FriendRequestService(
         return httpRequestBuilder.put(url, attribute).getMessage()
     }
 
+    fun getAttributes(friendId: Long): List<AttributeDTO> {
+        val url = "$friendsEndpoint/$friendId/attributes"
+        return httpRequestBuilder.get(url).getListFromData()
+    }
+
     fun getAttributeNames(friendId: Long): List<String> {
         val url = "$friendsEndpoint/$friendId/attribute_names"
-        return httpRequestBuilder.get(url).getStringListFromData()
+        return httpRequestBuilder.get(url).getListFromData()
     }
 
     fun updateAttribute(friendId: Long, attribute: AttributeDTO): String {

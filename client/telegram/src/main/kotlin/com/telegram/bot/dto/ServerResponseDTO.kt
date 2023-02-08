@@ -19,26 +19,18 @@ fun ResponseDTO.getData(): String {
     else klaxon.parse<ResponseJsonDTO>(this.body)?.data ?: "Something went wrong, type /cancel to start over"
 }
 
-fun ResponseDTO.getUserFromData(): UserDTO {
+inline fun <reified T>ResponseDTO.getObjectFromData(): T {
     if (this.statusCode >= 300) throw RuntimeException(this.getMessage())
     val parsed = klaxon.parseJsonObject(StringReader(this.body))
     val jsonObject = parsed.obj("data")!!
-    return klaxon.parseFromJsonObject<UserDTO>(jsonObject)
+    return klaxon.parseFromJsonObject<T>(jsonObject)
         ?: throw RuntimeException("Something went wrong, type /cancel to start over")
 }
 
-fun ResponseDTO.getFriendFromData(): FriendDTO {
-    if (this.statusCode >= 300) throw RuntimeException(this.getMessage())
-    val parsed = klaxon.parseJsonObject(StringReader(this.body))
-    val jsonObject = parsed.obj("data")!!
-    return klaxon.parseFromJsonObject<FriendDTO>(jsonObject)
-        ?: throw RuntimeException("Something went wrong, type /cancel to start over")
-}
-
-fun ResponseDTO.getStringListFromData(): List<String> {
+inline fun <reified T>ResponseDTO.getListFromData(): List<T> {
     if (this.statusCode >= 300) throw RuntimeException(this.getMessage())
     val parsed = klaxon.parseJsonObject(StringReader(this.body))
     val dataArray = parsed.array<Any>("data")
-    val attributes = dataArray?.let { klaxon.parseFromJsonArray<String>(it) }
+    val attributes = dataArray?.let { klaxon.parseFromJsonArray<T>(it) }
     return attributes ?: throw RuntimeException("Something went wrong, type /cancel to start over")
 }

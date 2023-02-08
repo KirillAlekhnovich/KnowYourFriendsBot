@@ -26,7 +26,7 @@ class UserRequestService(
 
     fun getUser(id: Long): UserDTO {
         val url = "$usersEndpoint/$id"
-        return httpRequestBuilder.get(url).getUserFromData()
+        return httpRequestBuilder.get(url).getObjectFromData()
     }
 
     fun resetUser(id: Long): String {
@@ -36,12 +36,12 @@ class UserRequestService(
 
     fun getFriendNames(userId: Long): List<String> {
         val url = "$usersEndpoint/$userId/friends/names"
-        return httpRequestBuilder.get(url).getStringListFromData()
+        return httpRequestBuilder.get(url).getListFromData()
     }
 
     fun getFriendByName(userId: Long, friendName: String): FriendDTO {
         val url = "$usersEndpoint/$userId/friends/$friendName"
-        return httpRequestBuilder.get(url).getFriendFromData()
+        return httpRequestBuilder.get(url).getObjectFromData()
     }
 
     fun addFriend(userId: Long, friendDTO: FriendDTO): String {
