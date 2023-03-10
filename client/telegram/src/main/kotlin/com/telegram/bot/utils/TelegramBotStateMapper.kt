@@ -8,18 +8,20 @@ import org.springframework.stereotype.Component
 class TelegramBotStateMapper {
     fun toDTO(entity: TelegramBotState): TelegramBotStateDTO {
         return TelegramBotStateDTO(
-            entity.id,
-            entity.command,
+            entity.userId,
+            entity.currCommand,
             entity.state,
+            entity.commandsQueue,
             entity.storage
         )
     }
 
     fun toEntity(dto: TelegramBotStateDTO): TelegramBotState {
         return TelegramBotState(
-            dto.id,
-            dto.command,
+            dto.userId,
+            dto.currCommand,
             dto.state,
+            dto.commandsQueue,
             dto.storage
         )
     }

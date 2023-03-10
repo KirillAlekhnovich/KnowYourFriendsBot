@@ -19,9 +19,9 @@ class UserRequestService(
         return httpRequestBuilder.get(url).getData() == "true"
     }
 
-    fun registerUser(id: Long): String {
+    fun registerUser(id: Long): UserDTO {
         val url = "$usersEndpoint/$id"
-        return httpRequestBuilder.post(url).getData()
+        return httpRequestBuilder.post(url).getObjectFromData()
     }
 
     fun getUser(id: Long): UserDTO {

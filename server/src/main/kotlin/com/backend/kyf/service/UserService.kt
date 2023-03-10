@@ -53,12 +53,13 @@ class UserService(
 
     fun addFriend(userId: Long, friendDTO: FriendDTO): UserDTO {
         val user = getUserById(userId)
+        if (!friendDTO.name.isCorrect()) throw InvalidFriendNameException()
+        if (user.friends.any { it.name == friendDTO.name }) throw FriendAlreadyExistsException()
+
         val friend = friendMapper.toEntity(friendService.createFriend(friendDTO))
-        if (!friend.name.isCorrect()) throw InvalidFriendNameException()
         user.generalAttributes.forEach {
             friendService.addAttribute(friend.id, AttributeDTO(it, "Not set"))
         }
-        if (user.friends.any { it.name == friend.name }) throw FriendAlreadyExistsException()
         user.friends.add(friend)
         userRepository.save(user)
         return userMapper.toDTO(user)

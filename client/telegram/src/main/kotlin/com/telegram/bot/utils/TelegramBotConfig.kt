@@ -2,26 +2,26 @@ package com.telegram.bot.utils
 
 import com.telegram.bot.dto.TelegramBotStateDTO
 import com.telegram.bot.dto.UserDTO
-import com.telegram.bot.handler.BotCommandHandler
+import com.telegram.bot.dto.addParamToStorage
+import com.telegram.bot.dto.getParamFromStorage
 import com.telegram.bot.handler.BotState
-import com.telegram.bot.service.FriendRequestService
+import com.telegram.bot.handler.CommandHandler
 import com.telegram.bot.service.TelegramBotStateService
 import com.telegram.bot.service.UserRequestService
-import com.telegram.bot.utils.CommandParser.getState
-import com.telegram.bot.utils.CommandParser.isCommand
-import com.telegram.bot.utils.CommandParser.toCommand
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.telegram.telegrambots.bots.TelegramLongPollingBot
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText
 import org.telegram.telegrambots.meta.api.objects.Update
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
 import java.util.*
 
 @Service
 class TelegramBotConfig(
     private val telegramBotStateService: TelegramBotStateService,
     private val userRequestService: UserRequestService,
-    private val friendRequestService: FriendRequestService
+    private val commandHandler: CommandHandler
 ) : TelegramLongPollingBot() {
 
     @Value("\${telegram.bot.token}")
@@ -35,48 +35,65 @@ class TelegramBotConfig(
     override fun getBotUsername(): String = botUsername
 
     override fun onUpdateReceived(update: Update) {
-        val (chatId, message) = getMessage(update)
-        if (!userRequestService.exists(chatId)) userRequestService.registerUser(chatId)
+        val (chatId, message, messageId) = getMessage(update)
+        val (user, botState) = getConfig(chatId)
+        botState.addParamToStorage(StorageParams.CALLBACK_MESSAGE_ID, messageId)
+        sendResponse(botState.userId, botState, user, message)
+        botState.state = CommandsMap.get(botState.currCommand).nextState(botState)
+        if (botState.state == BotState.EXPECTING_COMMAND) botState.currCommand = Commands.UNKNOWN
+        telegramBotStateService.createBotState(botState)
+    }
+
+    private fun getMessage(update: Update): Triple<Long, String, String> {
+        val chatId: Long
+        val message: String
+        val messageId: String
+        if (update.hasCallbackQuery()) {
+            message = update.callbackQuery.data
+            chatId = update.callbackQuery.from.id
+            messageId = update.callbackQuery.message.messageId.toString()
+        } else if (update.hasMessage()) {
+            message = update.message.text
+            chatId = update.message.chatId
+            messageId = update.message.messageId.toString()
+        } else throw RuntimeException("No message received")
+        return Triple(chatId, message, messageId)
+    }
+
+    private fun getConfig(chatId: Long): Pair<UserDTO, TelegramBotStateDTO> {
+        val user = if (!userRequestService.exists(chatId)) userRequestService.registerUser(chatId)
+        else userRequestService.getUser(chatId)
         val botState = if (telegramBotStateService.exists(chatId)) {
             telegramBotStateService.getBotStateById(chatId)
         } else {
             telegramBotStateService.createBotState(
                 TelegramBotStateDTO(
-                    chatId, BotCommandHandler.START,
-                    BotState.EXPECTING_COMMAND, emptyMap<String, String>().toMutableMap()
+                    chatId, Commands.START,
+                    BotState.EXPECTING_COMMAND, mutableListOf(), emptyMap<String, String>().toMutableMap()
                 )
             )
         }
-        val user = userRequestService.getUser(botState.id)
-        if (message.isCommand()) {
-            botState.state = message.getState()
-            botState.command = message.toCommand()
-        }
-        sendResponse(botState.id, botState, user, message)
-        botState.state = botState.command.nextState(botState.state)
-        telegramBotStateService.createBotState(botState)
-    }
-
-    private fun getMessage(update: Update): Pair<Long, String> {
-        val message: String
-        val chatId: Long
-        if (update.hasCallbackQuery()) {
-            message = update.callbackQuery.data
-            chatId = update.callbackQuery.from.id
-        } else if (update.hasMessage()) {
-            message = update.message.text
-            chatId = update.message.chatId
-        } else throw RuntimeException("No message received")
-        return Pair(chatId, message)
+        return Pair(user, botState)
     }
 
     private fun sendResponse(chatId: Long, botState: TelegramBotStateDTO, user: UserDTO, message: String) {
-        val response = botState.command.execute(user, botState, message, userRequestService, friendRequestService)
+        val response = commandHandler.handle(user, message, botState)
         response.forEach {
-            val responseMsg = SendMessage(chatId.toString(), it.message)
-            responseMsg.enableMarkdown(true)
-            responseMsg.replyMarkup = it.markup
-            execute(responseMsg)
+            when (it.type) {
+                MessageType.SEND -> {
+                    val responseMsg = SendMessage(chatId.toString(), it.message)
+                    responseMsg.replyMarkup = it.markup
+                    execute(responseMsg)
+                }
+                MessageType.EDIT -> {
+                    val editMessage = EditMessageText()
+                    editMessage.chatId = chatId.toString()
+                    editMessage.messageId = botState.getParamFromStorage(StorageParams.CALLBACK_MESSAGE_ID).toInt()
+                    editMessage.text = it.message
+                    editMessage.replyMarkup = it.markup as InlineKeyboardMarkup?
+                    execute(editMessage)
+                }
+            }
         }
     }
 }
