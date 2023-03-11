@@ -1,6 +1,5 @@
 package com.telegram.bot.handler.command
 
-import com.telegram.bot.dto.TelegramBotStateDTO
 import com.telegram.bot.dto.UserDTO
 import com.telegram.bot.handler.BotState
 import com.telegram.bot.handler.Buttons.createKeyboardButton
@@ -22,20 +21,16 @@ class StartCommand : Command {
         return "Starts conversation with bot"
     }
 
-    override fun nextState(botState: TelegramBotStateDTO): BotState {
+    override fun nextState(userId: Long): BotState {
         return BotState.EXPECTING_COMMAND
     }
 
-    override fun getMessage(
-        user: UserDTO,
-        message: String,
-        telegramBotState: TelegramBotStateDTO
-    ): String {
+    override fun getMessage(user: UserDTO, message: String): String {
         return "Hello! I'm Know Your Friends Bot. My goal is to keep detailed info about your friends for you. " +
                 "Please, select one of the options below to continue"
     }
 
-    override fun getButtons(botState: TelegramBotStateDTO): ReplyKeyboard? {
+    override fun getButtons(userId: Long): ReplyKeyboard? {
         val buttons: MutableList<KeyboardRow> = ArrayList()
         val row = KeyboardRow()
 

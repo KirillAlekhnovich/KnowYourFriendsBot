@@ -1,11 +1,15 @@
 package com.telegram.bot.handler
 
 import com.telegram.bot.dto.ClientResponseDTO
-import com.telegram.bot.dto.TelegramBotStateDTO
 import com.telegram.bot.dto.UserDTO
 import com.telegram.bot.handler.command.Command
 import com.telegram.bot.utils.Commands
 import com.telegram.bot.utils.CommandsMap
+import com.telegram.bot.utils.Jedis
+import com.telegram.bot.utils.Jedis.addToCommandsQueue
+import com.telegram.bot.utils.Jedis.getCommandsQueue
+import com.telegram.bot.utils.Jedis.removeFirstCommandFromQueue
+import com.telegram.bot.utils.RedisParams
 import org.springframework.stereotype.Component
 
 @Component
@@ -25,17 +29,18 @@ class CommandHandler(private val commands: MutableMap<String, Command>) {
         CommandsMap.registerCommands(commands)
     }
 
-    fun handle(user: UserDTO, message: String, botState: TelegramBotStateDTO): List<ClientResponseDTO> {
+    fun handle(user: UserDTO, message: String): List<ClientResponseDTO> {
         val responseMessages = mutableListOf<ClientResponseDTO>()
-        botState.commandsQueue.add(message)
-        while (botState.commandsQueue.isNotEmpty()) {
-            if (botState.commandsQueue.first().isCommand()) {
-                if (botState.state != BotState.EXECUTE_USING_STORAGE) botState.state =
-                    botState.commandsQueue.first().getState()
-                botState.currCommand = botState.commandsQueue.first().toCommand()
+        val jedis = Jedis.get()
+        jedis.addToCommandsQueue(user.id, message)
+        while (jedis.getCommandsQueue(user.id).isNotEmpty()) {
+            if (jedis.getCommandsQueue(user.id).first().isCommand()) {
+                jedis.hset(user.id.toString(), RedisParams.STATE.name, jedis.getCommandsQueue(user.id).first().getState().name)
+                jedis.hset(user.id.toString(), RedisParams.COMMAND.name, jedis.getCommandsQueue(user.id).first().toCommand())
             }
-            responseMessages.add(CommandsMap.get(botState.currCommand).execute(user, message, botState))
-            botState.commandsQueue.removeFirst()
+            val currCommand = CommandsMap.get(jedis.hget(user.id.toString(), RedisParams.COMMAND.name))
+            responseMessages.add(currCommand.execute(user, message))
+            jedis.removeFirstCommandFromQueue(user.id)
         }
         return responseMessages
     }

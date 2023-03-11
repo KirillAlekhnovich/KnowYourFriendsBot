@@ -1,10 +1,11 @@
 package com.telegram.bot.handler.command
 
-import com.telegram.bot.dto.TelegramBotStateDTO
 import com.telegram.bot.dto.UserDTO
 import com.telegram.bot.handler.BotState
 import com.telegram.bot.service.UserRequestService
 import com.telegram.bot.utils.Commands
+import com.telegram.bot.utils.Jedis
+import com.telegram.bot.utils.Jedis.reset
 import org.springframework.stereotype.Component
 import javax.inject.Named
 
@@ -18,16 +19,12 @@ class ResetCommand(
         return "Resets your profile. Removes all your friends and general attributes"
     }
 
-    override fun nextState(botState: TelegramBotStateDTO): BotState {
+    override fun nextState(userId: Long): BotState {
         return BotState.EXPECTING_COMMAND
     }
 
-    override fun getMessage(
-        user: UserDTO,
-        message: String,
-        telegramBotState: TelegramBotStateDTO
-    ): String {
-        telegramBotState.storage.clear()
+    override fun getMessage(user: UserDTO, message: String): String {
+        Jedis.get().reset(user.id)
         userRequestService.resetUser(user.id)
         return "Your profile has been reset"
     }

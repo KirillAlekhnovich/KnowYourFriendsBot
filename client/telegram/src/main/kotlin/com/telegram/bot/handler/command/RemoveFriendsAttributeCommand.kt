@@ -7,7 +7,9 @@ import com.telegram.bot.service.FriendRequestService
 import com.telegram.bot.service.UserRequestService
 import com.telegram.bot.utils.Commands
 import com.telegram.bot.utils.CommandsMap
-import com.telegram.bot.utils.StorageParams
+import com.telegram.bot.utils.Jedis
+import com.telegram.bot.utils.Jedis.addToCommandsQueue
+import com.telegram.bot.utils.RedisParams
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard
 import javax.inject.Named
@@ -22,44 +24,47 @@ class RemoveFriendsAttributeCommand(
         return "Removes friend's existing attribute"
     }
 
-    override fun nextState(botState: TelegramBotStateDTO): BotState {
-        return when (botState.state) {
-            BotState.EXPECTING_COMMAND -> BotState.EXPECTING_FRIEND_NAME
-            BotState.EXPECTING_FRIEND_NAME, BotState.EXECUTE_USING_STORAGE -> BotState.EXPECTING_ATTRIBUTE_NAME
-            BotState.EXPECTING_ATTRIBUTE_NAME -> BotState.EXPECTING_COMMAND
+    override fun nextState(userId: Long): BotState {
+        val botState = Jedis.get().hget(userId.toString(), RedisParams.STATE.name)
+        return when (botState) {
+            BotState.EXPECTING_COMMAND.name -> BotState.EXPECTING_FRIEND_NAME
+            BotState.EXPECTING_FRIEND_NAME.name, BotState.EXECUTE_USING_STORAGE.name -> BotState.EXPECTING_ATTRIBUTE_NAME
+            BotState.EXPECTING_ATTRIBUTE_NAME.name -> BotState.EXPECTING_COMMAND
             else -> BotState.EXPECTING_COMMAND
         }
     }
 
-    override fun getMessage(user: UserDTO, message: String, telegramBotState: TelegramBotStateDTO): String {
-        return when (telegramBotState.state) {
-            BotState.EXPECTING_COMMAND -> "Which friend would you like to remove attribute from?"
-            BotState.EXPECTING_FRIEND_NAME -> {
+    override fun getMessage(user: UserDTO, message: String): String {
+        val jedis = Jedis.get()
+        val botState = jedis.hget(user.id.toString(), RedisParams.STATE.name)
+        return when (botState) {
+            BotState.EXPECTING_COMMAND.name -> "Which friend would you like to remove attribute from?"
+            BotState.EXPECTING_FRIEND_NAME.name -> {
                 return try {
                     val friend = userRequestService.getFriendByName(user.id, message)
-                    telegramBotState.addParamToStorage(StorageParams.FRIEND_ID, friend.id.toString())
+                    jedis.hset(user.id.toString(), RedisParams.FRIEND_ID.name, friend.id.toString())
                     "What attribute would you like to remove?"
                 } catch (e: RuntimeException) {
-                    telegramBotState.state = BotState.ERROR
+                    jedis.hset(user.id.toString(), RedisParams.STATE.name, BotState.ERROR.name)
                     e.message!!
                 }
             }
-            BotState.EXECUTE_USING_STORAGE -> "What attribute would you like to remove?"
-            BotState.EXPECTING_ATTRIBUTE_NAME -> {
+            BotState.EXECUTE_USING_STORAGE.name -> "What attribute would you like to remove?"
+            BotState.EXPECTING_ATTRIBUTE_NAME.name -> {
                 return try {
-                    telegramBotState.commandsQueue.add(Commands.FRIEND_INFO + Commands.STORAGE)
-                    val friendId = telegramBotState.getParamFromStorage(StorageParams.FRIEND_ID).toLong()
+                    jedis.addToCommandsQueue(user.id, Commands.FRIEND_INFO + Commands.STORAGE)
+                    val friendId = jedis.hget(user.id.toString(), RedisParams.FRIEND_ID.name).toLong()
                     friendRequestService.deleteAttribute(friendId, message)
                 } catch (e: RuntimeException) {
-                    telegramBotState.state = BotState.ERROR
+                    jedis.hset(user.id.toString(), RedisParams.STATE.name, BotState.ERROR.name)
                     e.message!!
                 }
             }
-            else -> CommandsMap.get(Commands.UNKNOWN).getMessage(user, message, telegramBotState)
+            else -> CommandsMap.get(Commands.UNKNOWN).getMessage(user, message)
         }
     }
 
-    override fun getButtons(botState: TelegramBotStateDTO): ReplyKeyboard? {
-        return Buttons.createAttributesMarkup(botState, friendRequestService)
+    override fun getButtons(userId: Long): ReplyKeyboard? {
+        return Buttons.createAttributesMarkup(userId, friendRequestService)
     }
 }

@@ -1,12 +1,8 @@
 package com.telegram.bot.utils
 
-import com.telegram.bot.dto.TelegramBotStateDTO
 import com.telegram.bot.dto.UserDTO
-import com.telegram.bot.dto.addParamToStorage
-import com.telegram.bot.dto.getParamFromStorage
 import com.telegram.bot.handler.BotState
 import com.telegram.bot.handler.CommandHandler
-import com.telegram.bot.service.TelegramBotStateService
 import com.telegram.bot.service.UserRequestService
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
@@ -19,7 +15,6 @@ import java.util.*
 
 @Service
 class TelegramBotConfig(
-    private val telegramBotStateService: TelegramBotStateService,
     private val userRequestService: UserRequestService,
     private val commandHandler: CommandHandler
 ) : TelegramLongPollingBot() {
@@ -36,12 +31,14 @@ class TelegramBotConfig(
 
     override fun onUpdateReceived(update: Update) {
         val (chatId, message, messageId) = getMessage(update)
-        val (user, botState) = getConfig(chatId)
-        botState.addParamToStorage(StorageParams.CALLBACK_MESSAGE_ID, messageId)
-        sendResponse(botState.userId, botState, user, message)
-        botState.state = CommandsMap.get(botState.currCommand).nextState(botState)
-        if (botState.state == BotState.EXPECTING_COMMAND) botState.currCommand = Commands.UNKNOWN
-        telegramBotStateService.createBotState(botState)
+        val user = getUser(chatId)
+        val jedis = Jedis.get()
+        redisInitialSetup(chatId, messageId)
+        sendResponse(user, message)
+        if (jedis.hexists(chatId.toString(), RedisParams.STATE.name)) {
+            val command = jedis.hget(chatId.toString(), RedisParams.COMMAND.name)
+            jedis.hset(chatId.toString(), RedisParams.STATE.name, CommandsMap.get(command).nextState(chatId).name)
+        }
     }
 
     private fun getMessage(update: Update): Triple<Long, String, String> {
@@ -60,35 +57,35 @@ class TelegramBotConfig(
         return Triple(chatId, message, messageId)
     }
 
-    private fun getConfig(chatId: Long): Pair<UserDTO, TelegramBotStateDTO> {
-        val user = if (!userRequestService.exists(chatId)) userRequestService.registerUser(chatId)
+    private fun getUser(chatId: Long): UserDTO {
+        return if (!userRequestService.exists(chatId)) userRequestService.registerUser(chatId)
         else userRequestService.getUser(chatId)
-        val botState = if (telegramBotStateService.exists(chatId)) {
-            telegramBotStateService.getBotStateById(chatId)
-        } else {
-            telegramBotStateService.createBotState(
-                TelegramBotStateDTO(
-                    chatId, Commands.START,
-                    BotState.EXPECTING_COMMAND, mutableListOf(), emptyMap<String, String>().toMutableMap()
-                )
-            )
-        }
-        return Pair(user, botState)
     }
 
-    private fun sendResponse(chatId: Long, botState: TelegramBotStateDTO, user: UserDTO, message: String) {
-        val response = commandHandler.handle(user, message, botState)
+    private fun redisInitialSetup(chatId: Long, messageId: String) {
+        val jedis = Jedis.get()
+        if (!jedis.hexists(chatId.toString(), RedisParams.COMMAND.name)) {
+            jedis.hset(chatId.toString(), RedisParams.COMMAND.name, Commands.START)
+        }
+        if (!jedis.hexists(chatId.toString(), RedisParams.STATE.name)) {
+            jedis.hset(chatId.toString(), RedisParams.STATE.name, BotState.EXPECTING_COMMAND.name)
+        }
+        jedis.hset(chatId.toString(), RedisParams.CALLBACK_MESSAGE_ID.name, messageId)
+    }
+
+    private fun sendResponse(user: UserDTO, message: String) {
+        val response = commandHandler.handle(user, message)
         response.forEach {
             when (it.type) {
                 MessageType.SEND -> {
-                    val responseMsg = SendMessage(chatId.toString(), it.message)
+                    val responseMsg = SendMessage(user.id.toString(), it.message)
                     responseMsg.replyMarkup = it.markup
                     execute(responseMsg)
                 }
                 MessageType.EDIT -> {
                     val editMessage = EditMessageText()
-                    editMessage.chatId = chatId.toString()
-                    editMessage.messageId = botState.getParamFromStorage(StorageParams.CALLBACK_MESSAGE_ID).toInt()
+                    editMessage.chatId = user.id.toString()
+                    editMessage.messageId = Jedis.get().hget(user.id.toString(), RedisParams.CALLBACK_MESSAGE_ID.name).toInt()
                     editMessage.text = it.message
                     editMessage.replyMarkup = it.markup as InlineKeyboardMarkup?
                     execute(editMessage)

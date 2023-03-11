@@ -4,6 +4,8 @@ import com.telegram.bot.dto.*
 import com.telegram.bot.handler.BotState
 import com.telegram.bot.utils.Commands
 import com.telegram.bot.utils.CommandsMap
+import com.telegram.bot.utils.Jedis
+import com.telegram.bot.utils.Jedis.incrementCurrentPage
 import com.telegram.bot.utils.MessageType
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard
@@ -16,28 +18,20 @@ class PreviousPageCommand : Command {
         return "Shows previous page of friends list"
     }
 
-    override fun nextState(botState: TelegramBotStateDTO): BotState {
+    override fun nextState(userId: Long): BotState {
         return BotState.EXPECTING_COMMAND
     }
 
-    override fun execute(user: UserDTO, message: String, telegramBotState: TelegramBotStateDTO): ClientResponseDTO {
-        return ClientResponseDTO(
-            getMessage(user, message, telegramBotState),
-            getButtons(telegramBotState),
-            MessageType.EDIT
-        )
+    override fun execute(user: UserDTO, message: String): ClientResponseDTO {
+        return ClientResponseDTO(getMessage(user, message), getButtons(user.id), MessageType.EDIT)
     }
 
-    override fun getMessage(user: UserDTO, message: String, telegramBotState: TelegramBotStateDTO): String {
-        try {
-            telegramBotState.incrementPage(-1)
-        } catch (e: Exception) {
-            return "Something went wrong"
-        }
-        return CommandsMap.get(Commands.LIST_FRIENDS).getMessage(user, message, telegramBotState)
+    override fun getMessage(user: UserDTO, message: String): String {
+        Jedis.get().incrementCurrentPage(user.id, -1)
+        return CommandsMap.get(Commands.LIST_FRIENDS).getMessage(user, message)
     }
 
-    override fun getButtons(botState: TelegramBotStateDTO): ReplyKeyboard? {
-        return CommandsMap.get(Commands.LIST_FRIENDS).getButtons(botState)
+    override fun getButtons(userId: Long): ReplyKeyboard? {
+        return CommandsMap.get(Commands.LIST_FRIENDS).getButtons(userId)
     }
 }

@@ -1,10 +1,9 @@
 package com.telegram.bot.handler
 
-import com.telegram.bot.dto.TelegramBotStateDTO
-import com.telegram.bot.dto.getParamFromStorage
 import com.telegram.bot.service.FriendRequestService
 import com.telegram.bot.utils.Commands
-import com.telegram.bot.utils.StorageParams
+import com.telegram.bot.utils.Jedis
+import com.telegram.bot.utils.RedisParams
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup
@@ -46,15 +45,14 @@ object Buttons {
         return markup
     }
 
-    fun createAttributesMarkup(
-        telegramBotState: TelegramBotStateDTO,
-        friendRequestService: FriendRequestService
-    ): ReplyKeyboard? {
-        if (telegramBotState.state != BotState.EXPECTING_FRIEND_NAME
-            && telegramBotState.state != BotState.EXECUTE_USING_STORAGE
+    fun createAttributesMarkup(userId: Long, friendRequestService: FriendRequestService): ReplyKeyboard? {
+        val jedis = Jedis.get()
+        val botState = jedis.hget(userId.toString(), RedisParams.STATE.name)
+        if (botState != BotState.EXPECTING_FRIEND_NAME.name
+            && botState != BotState.EXECUTE_USING_STORAGE.name
         ) return null
         return try {
-            val friendId = telegramBotState.getParamFromStorage(StorageParams.FRIEND_ID).toLong()
+            val friendId = jedis.hget(userId.toString(), RedisParams.FRIEND_ID.name).toLong()
             val friendAttributes = friendRequestService.getAttributeNames(friendId)
             val buttons: MutableList<MutableList<InlineKeyboardButton>> = ArrayList()
             val row: MutableList<InlineKeyboardButton> = ArrayList()

@@ -9,7 +9,9 @@ import com.telegram.bot.service.FriendRequestService
 import com.telegram.bot.service.UserRequestService
 import com.telegram.bot.utils.Commands
 import com.telegram.bot.utils.CommandsMap
-import com.telegram.bot.utils.StorageParams
+import com.telegram.bot.utils.Jedis
+import com.telegram.bot.utils.Jedis.addToCommandsQueue
+import com.telegram.bot.utils.RedisParams
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton
@@ -26,44 +28,49 @@ class FriendInfoCommand(
         return "Shows info about specific friend"
     }
 
-    override fun nextState(botState: TelegramBotStateDTO): BotState {
-        return when (botState.state) {
-            BotState.EXPECTING_COMMAND -> BotState.EXPECTING_FRIEND_NAME
-            BotState.EXPECTING_FRIEND_NAME -> BotState.EXPECTING_COMMAND
-            BotState.EXECUTE_USING_STORAGE -> BotState.EXPECTING_COMMAND
+    override fun nextState(userId: Long): BotState {
+        val botState = Jedis.get().hget(userId.toString(), RedisParams.STATE.name)
+        return when (botState) {
+            BotState.EXPECTING_COMMAND.name -> BotState.EXPECTING_FRIEND_NAME
+            BotState.EXPECTING_FRIEND_NAME.name -> BotState.EXPECTING_COMMAND
+            BotState.EXECUTE_USING_STORAGE.name -> BotState.EXPECTING_COMMAND
             else -> BotState.EXPECTING_COMMAND
         }
     }
 
-    override fun getMessage(user: UserDTO, message: String, telegramBotState: TelegramBotStateDTO): String {
-        return when (telegramBotState.state) {
-            BotState.EXPECTING_COMMAND -> "Please enter the name of the friend"
-            BotState.EXPECTING_FRIEND_NAME -> {
+    override fun getMessage(user: UserDTO, message: String): String {
+        val jedis = Jedis.get()
+        val botState = jedis.hget(user.id.toString(), RedisParams.STATE.name)
+        return when (botState) {
+            BotState.EXPECTING_COMMAND.name -> "Please enter the name of the friend"
+            BotState.EXPECTING_FRIEND_NAME.name -> {
                 try {
                     val friend = userRequestService.getFriendByName(user.id, message)
-                    telegramBotState.addParamToStorage(StorageParams.FRIEND_ID, friend.id.toString())
+                    jedis.hset(user.id.toString(), RedisParams.FRIEND_ID.name, friend.id.toString())
                     printFriendInfo(friend.id)
                 } catch (e: RuntimeException) {
-                    telegramBotState.commandsQueue.add(Commands.LIST_FRIENDS + Commands.STORAGE)
+                    jedis.addToCommandsQueue(user.id, Commands.LIST_FRIENDS + Commands.STORAGE)
                     e.message!!
                 }
             }
-            BotState.EXECUTE_USING_STORAGE -> {
+            BotState.EXECUTE_USING_STORAGE.name -> {
                 try {
-                    val friendId = telegramBotState.getParamFromStorage(StorageParams.FRIEND_ID).toLong()
+                    val friendId = jedis.hget(user.id.toString(), RedisParams.FRIEND_ID.name).toLong()
                     printFriendInfo(friendId)
                 } catch (e: RuntimeException) {
-                    telegramBotState.commandsQueue.add(Commands.LIST_FRIENDS + Commands.STORAGE)
+                    jedis.addToCommandsQueue(user.id, Commands.LIST_FRIENDS + Commands.STORAGE)
                     e.message!!
                 }
             }
-            else -> CommandsMap.get(Commands.UNKNOWN).getMessage(user, message, telegramBotState)
+            else -> CommandsMap.get(Commands.UNKNOWN).getMessage(user, message)
         }
     }
 
-    override fun getButtons(botState: TelegramBotStateDTO): ReplyKeyboard? {
-        if (!botState.paramIsInStorage(StorageParams.FRIEND_ID)
-            || botState.state == BotState.EXPECTING_COMMAND
+    override fun getButtons(userId: Long): ReplyKeyboard? {
+        val jedis = Jedis.get()
+        val botState = jedis.hget(userId.toString(), RedisParams.STATE.name)
+        if (!jedis.hexists(userId.toString(), RedisParams.FRIEND_ID.name)
+            || botState == BotState.EXPECTING_COMMAND.name
         ) return null
         val buttons: MutableList<MutableList<InlineKeyboardButton>> = ArrayList()
         val row: MutableList<InlineKeyboardButton> = ArrayList()

@@ -1,6 +1,5 @@
 package com.telegram.bot.handler.command
 
-import com.telegram.bot.dto.TelegramBotStateDTO
 import com.telegram.bot.dto.UserDTO
 import com.telegram.bot.handler.BotState
 import com.telegram.bot.utils.Commands
@@ -21,15 +20,11 @@ class HelpCommand : Command {
         return "Shows a list of all available commands"
     }
 
-    override fun nextState(botState: TelegramBotStateDTO): BotState {
+    override fun nextState(userId: Long): BotState {
         return BotState.EXPECTING_COMMAND
     }
 
-    override fun getMessage(
-        user: UserDTO,
-        message: String,
-        telegramBotState: TelegramBotStateDTO
-    ): String {
+    override fun getMessage(user: UserDTO, message: String): String {
         val commandsWithDescription = CommandsMap.getDefaultCommands().filter { !notListedCommands.contains(it.key) }
             .map { it.key + " - " + it.value.description() }
             .joinToString("\n")

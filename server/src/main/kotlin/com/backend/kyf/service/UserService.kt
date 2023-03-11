@@ -116,5 +116,6 @@ class UserService(
             friendRepository.save(it)
         }
         user.generalAttributes.remove(attributeName)
+        userRepository.save(user)
     }
 }

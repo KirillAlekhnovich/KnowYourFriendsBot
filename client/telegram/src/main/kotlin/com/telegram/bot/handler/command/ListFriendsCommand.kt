@@ -7,12 +7,15 @@ import com.telegram.bot.handler.Buttons.createInlineMarkup
 import com.telegram.bot.handler.Buttons.createRowInstance
 import com.telegram.bot.service.UserRequestService
 import com.telegram.bot.utils.Commands
+import com.telegram.bot.utils.Jedis
+import com.telegram.bot.utils.Jedis.getCurrentPage
 import com.telegram.bot.utils.Paging
 import com.telegram.bot.utils.Paging.getPage
-import com.telegram.bot.utils.StorageParams
+import com.telegram.bot.utils.RedisParams
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton
+import kotlin.math.ceil
 import java.util.ArrayList
 import javax.inject.Named
 
@@ -25,40 +28,43 @@ class ListFriendsCommand(
         return "Shows a list of your friends"
     }
 
-    override fun nextState(botState: TelegramBotStateDTO): BotState {
+    override fun nextState(userId: Long): BotState {
         return BotState.EXPECTING_COMMAND
     }
 
-    override fun execute(user: UserDTO, message: String, telegramBotState: TelegramBotStateDTO): ClientResponseDTO {
-        telegramBotState.addParamToStorage(StorageParams.CURRENT_PAGE, "1")
-        return ClientResponseDTO(getMessage(user, message, telegramBotState), getButtons(telegramBotState))
+    override fun execute(user: UserDTO, message: String): ClientResponseDTO {
+        Jedis.get().hset(user.id.toString(), RedisParams.CURRENT_PAGE.name, "1")
+        return ClientResponseDTO(getMessage(user, message), getButtons(user.id))
     }
 
-    override fun getMessage(user: UserDTO, message: String, telegramBotState: TelegramBotStateDTO): String {
-        telegramBotState.removeParamFromStorage(StorageParams.FRIEND_ID)
+    override fun getMessage(user: UserDTO, message: String): String {
+        val jedis = Jedis.get()
+        jedis.hdel(user.id.toString(), RedisParams.FRIEND_ID.name)
         val friends = userRequestService.getFriendNames(user.id)
         return if (friends.isEmpty()) {
             "You have no friends :("
         } else {
             val stringBuilder = StringBuilder()
-            stringBuilder.append("List of your friends:\n\n")
             var index = 1
-            val page = getCurrentPage(telegramBotState)
+            val page = jedis.getCurrentPage(user.id)
+            val totalPages = ceil(friends.size.toDouble() / Paging.ITEMS_PER_PAGE).toInt()
+            stringBuilder.append("List of your friends:\n\n")
             if (page > 1) index = (page - 1) * Paging.ITEMS_PER_PAGE + 1
             friends.getPage(page).map { stringBuilder.append("$index. ${it}\n"); index++ }
+            stringBuilder.append("\nPage: $page of $totalPages")
             stringBuilder.toString()
         }
     }
 
-    override fun getButtons(botState: TelegramBotStateDTO): ReplyKeyboard? {
+    override fun getButtons(userId: Long): ReplyKeyboard? {
         val buttons: MutableList<MutableList<InlineKeyboardButton>> = ArrayList()
         val row: MutableList<InlineKeyboardButton> = ArrayList()
 
-        val currentPage = getCurrentPage(botState)
+        val currentPage = Jedis.get().getCurrentPage(userId)
         if (currentPage > 1) {
             row.add(createInlineButton("Previous page", Commands.PREVIOUS_PAGE))
         }
-        if (userRequestService.getFriendNames(botState.userId).size > Paging.ITEMS_PER_PAGE * currentPage) {
+        if (userRequestService.getFriendNames(userId).size > Paging.ITEMS_PER_PAGE * currentPage) {
             row.add(createInlineButton("Next page", Commands.NEXT_PAGE))
         }
         buttons.add(createRowInstance(row))
@@ -73,9 +79,5 @@ class ListFriendsCommand(
         buttons.add(createRowInstance(row))
 
         return createInlineMarkup(buttons)
-    }
-
-    private fun getCurrentPage(botState: TelegramBotStateDTO): Int {
-        return botState.getParamFromStorage(StorageParams.CURRENT_PAGE).toInt()
     }
 }
