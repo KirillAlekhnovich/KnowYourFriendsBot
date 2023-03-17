@@ -21,20 +21,20 @@ class RemoveFriendCommand(
     }
 
     override fun nextState(userId: Long): BotState {
-        val botState = Jedis.get().hget(userId.toString(), RedisParams.STATE.name)
+        val botState = enumValueOf<BotState>(Jedis.get().hget(userId.toString(), RedisParams.STATE.name))
         return when (botState) {
-            BotState.EXPECTING_COMMAND.name -> BotState.EXPECTING_FRIEND_NAME
-            BotState.EXPECTING_FRIEND_NAME.name -> BotState.EXPECTING_COMMAND
+            BotState.EXPECTING_COMMAND -> BotState.EXPECTING_FRIEND_NAME
+            BotState.EXPECTING_FRIEND_NAME -> BotState.EXPECTING_COMMAND
             else -> BotState.EXPECTING_COMMAND
         }
     }
 
     override fun getMessage(user: UserDTO, message: String): String {
         val jedis = Jedis.get()
-        val botState = jedis.hget(user.id.toString(), RedisParams.STATE.name)
+        val botState = enumValueOf<BotState>(jedis.hget(user.id.toString(), RedisParams.STATE.name))
         return when (botState) {
-            BotState.EXPECTING_COMMAND.name -> "Which friend would you like to remove?"
-            BotState.EXPECTING_FRIEND_NAME.name -> {
+            BotState.EXPECTING_COMMAND -> "Which friend would you like to remove?"
+            BotState.EXPECTING_FRIEND_NAME -> {
                 try {
                     jedis.addToCommandsQueue(user.id, Commands.LIST_FRIENDS)
                     val friendId = userRequestService.getFriendByName(user.id, message).id
@@ -43,7 +43,7 @@ class RemoveFriendCommand(
                     e.message!!
                 }
             }
-            BotState.EXECUTE_USING_STORAGE.name -> {
+            BotState.EXECUTE_USING_STORAGE -> {
                 jedis.addToCommandsQueue(user.id, Commands.LIST_FRIENDS)
                 val friendId = jedis.hget(user.id.toString(), RedisParams.FRIEND_ID.name).toLong()
                 userRequestService.removeFriend(user.id, friendId)

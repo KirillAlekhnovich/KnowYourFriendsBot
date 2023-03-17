@@ -25,22 +25,22 @@ class UpdateFriendsAttributeCommand(
     }
 
     override fun nextState(userId: Long): BotState {
-        val botState = Jedis.get().hget(userId.toString(), RedisParams.STATE.name)
+        val botState = enumValueOf<BotState>(Jedis.get().hget(userId.toString(), RedisParams.STATE.name))
         return when (botState) {
-            BotState.EXPECTING_COMMAND.name -> BotState.EXPECTING_FRIEND_NAME
-            BotState.EXPECTING_FRIEND_NAME.name, BotState.EXECUTE_USING_STORAGE.name -> BotState.EXPECTING_ATTRIBUTE_NAME
-            BotState.EXPECTING_ATTRIBUTE_NAME.name -> BotState.EXPECTING_ATTRIBUTE_VALUE
-            BotState.EXPECTING_ATTRIBUTE_VALUE.name -> BotState.EXPECTING_COMMAND
+            BotState.EXPECTING_COMMAND -> BotState.EXPECTING_FRIEND_NAME
+            BotState.EXPECTING_FRIEND_NAME, BotState.EXECUTE_USING_STORAGE -> BotState.EXPECTING_ATTRIBUTE_NAME
+            BotState.EXPECTING_ATTRIBUTE_NAME -> BotState.EXPECTING_ATTRIBUTE_VALUE
+            BotState.EXPECTING_ATTRIBUTE_VALUE -> BotState.EXPECTING_COMMAND
             else -> BotState.EXPECTING_COMMAND
         }
     }
 
     override fun getMessage(user: UserDTO, message: String): String {
         val jedis = Jedis.get()
-        val botState = jedis.hget(user.id.toString(), RedisParams.STATE.name)
+        val botState = enumValueOf<BotState>(jedis.hget(user.id.toString(), RedisParams.STATE.name))
         return when (botState) {
-            BotState.EXPECTING_COMMAND.name -> "Please specify friend's name"
-            BotState.EXPECTING_FRIEND_NAME.name -> {
+            BotState.EXPECTING_COMMAND -> "Please specify friend's name"
+            BotState.EXPECTING_FRIEND_NAME -> {
                 try {
                     val friend = userRequestService.getFriendByName(user.id, message)
                     jedis.hset(user.id.toString(), RedisParams.FRIEND_ID.name, friend.id.toString())
@@ -50,8 +50,8 @@ class UpdateFriendsAttributeCommand(
                     e.message!!
                 }
             }
-            BotState.EXECUTE_USING_STORAGE.name -> "What attribute would you like to update?"
-            BotState.EXPECTING_ATTRIBUTE_NAME.name -> {
+            BotState.EXECUTE_USING_STORAGE -> "What attribute would you like to update?"
+            BotState.EXPECTING_ATTRIBUTE_NAME -> {
                 try {
                     val friendId = jedis.hget(user.id.toString(), RedisParams.FRIEND_ID.name).toLong()
                     if (!friendRequestService.hasAttribute(friendId, message)) {
@@ -66,7 +66,7 @@ class UpdateFriendsAttributeCommand(
                     e.message!!
                 }
             }
-            BotState.EXPECTING_ATTRIBUTE_VALUE.name -> {
+            BotState.EXPECTING_ATTRIBUTE_VALUE -> {
                 try {
                     jedis.addToCommandsQueue(user.id, Commands.FRIEND_INFO + Commands.STORAGE)
                     val friendId = jedis.hget(user.id.toString(), RedisParams.FRIEND_ID.name).toLong()

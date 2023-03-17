@@ -41,19 +41,8 @@ class ListFriendsCommand(
         val jedis = Jedis.get()
         jedis.hdel(user.id.toString(), RedisParams.FRIEND_ID.name)
         val friends = userRequestService.getFriendNames(user.id)
-        return if (friends.isEmpty()) {
-            "You have no friends :("
-        } else {
-            val stringBuilder = StringBuilder()
-            var index = 1
-            val page = jedis.getCurrentPage(user.id)
-            val totalPages = ceil(friends.size.toDouble() / Paging.ITEMS_PER_PAGE).toInt()
-            stringBuilder.append("List of your friends:\n\n")
-            if (page > 1) index = (page - 1) * Paging.ITEMS_PER_PAGE + 1
-            friends.getPage(page).map { stringBuilder.append("$index. ${it}\n"); index++ }
-            stringBuilder.append("\nPage: $page of $totalPages")
-            stringBuilder.toString()
-        }
+        return if (friends.isEmpty())  "You have no friends :("
+        else generateFriendsList(user.id, friends)
     }
 
     override fun getButtons(userId: Long): ReplyKeyboard? {
@@ -79,5 +68,18 @@ class ListFriendsCommand(
         buttons.add(createRowInstance(row))
 
         return createInlineMarkup(buttons)
+    }
+
+    private fun generateFriendsList(userId: Long, friends: List<String>): String {
+        val jedis = Jedis.get()
+        val stringBuilder = StringBuilder()
+        var index = 1
+        val page = jedis.getCurrentPage(userId)
+        val totalPages = ceil(friends.size.toDouble() / Paging.ITEMS_PER_PAGE).toInt()
+        stringBuilder.append("List of your friends:\n\n")
+        if (page > 1) index = (page - 1) * Paging.ITEMS_PER_PAGE + 1
+        friends.getPage(page).map { stringBuilder.append("$index. ${it}\n"); index++ }
+        stringBuilder.append("\nPage: $page of $totalPages")
+        return stringBuilder.toString()
     }
 }

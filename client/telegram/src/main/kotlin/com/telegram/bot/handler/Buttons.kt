@@ -47,9 +47,9 @@ object Buttons {
 
     fun createAttributesMarkup(userId: Long, friendRequestService: FriendRequestService): ReplyKeyboard? {
         val jedis = Jedis.get()
-        val botState = jedis.hget(userId.toString(), RedisParams.STATE.name)
-        if (botState != BotState.EXPECTING_FRIEND_NAME.name
-            && botState != BotState.EXECUTE_USING_STORAGE.name
+        val botState = enumValueOf<BotState>(jedis.hget(userId.toString(), RedisParams.STATE.name))
+        if (botState != BotState.EXPECTING_FRIEND_NAME
+            && botState != BotState.EXECUTE_USING_STORAGE
         ) return null
         return try {
             val friendId = jedis.hget(userId.toString(), RedisParams.FRIEND_ID.name).toLong()

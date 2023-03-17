@@ -29,21 +29,21 @@ class FriendInfoCommand(
     }
 
     override fun nextState(userId: Long): BotState {
-        val botState = Jedis.get().hget(userId.toString(), RedisParams.STATE.name)
+        val botState = enumValueOf<BotState>(Jedis.get().hget(userId.toString(), RedisParams.STATE.name))
         return when (botState) {
-            BotState.EXPECTING_COMMAND.name -> BotState.EXPECTING_FRIEND_NAME
-            BotState.EXPECTING_FRIEND_NAME.name -> BotState.EXPECTING_COMMAND
-            BotState.EXECUTE_USING_STORAGE.name -> BotState.EXPECTING_COMMAND
+            BotState.EXPECTING_COMMAND -> BotState.EXPECTING_FRIEND_NAME
+            BotState.EXPECTING_FRIEND_NAME -> BotState.EXPECTING_COMMAND
+            BotState.EXECUTE_USING_STORAGE -> BotState.EXPECTING_COMMAND
             else -> BotState.EXPECTING_COMMAND
         }
     }
 
     override fun getMessage(user: UserDTO, message: String): String {
         val jedis = Jedis.get()
-        val botState = jedis.hget(user.id.toString(), RedisParams.STATE.name)
+        val botState = enumValueOf<BotState>(jedis.hget(user.id.toString(), RedisParams.STATE.name))
         return when (botState) {
-            BotState.EXPECTING_COMMAND.name -> "Please enter the name of the friend"
-            BotState.EXPECTING_FRIEND_NAME.name -> {
+            BotState.EXPECTING_COMMAND -> "Please enter the name of the friend"
+            BotState.EXPECTING_FRIEND_NAME -> {
                 try {
                     val friend = userRequestService.getFriendByName(user.id, message)
                     jedis.hset(user.id.toString(), RedisParams.FRIEND_ID.name, friend.id.toString())
@@ -53,7 +53,7 @@ class FriendInfoCommand(
                     e.message!!
                 }
             }
-            BotState.EXECUTE_USING_STORAGE.name -> {
+            BotState.EXECUTE_USING_STORAGE -> {
                 try {
                     val friendId = jedis.hget(user.id.toString(), RedisParams.FRIEND_ID.name).toLong()
                     printFriendInfo(friendId)
@@ -68,9 +68,9 @@ class FriendInfoCommand(
 
     override fun getButtons(userId: Long): ReplyKeyboard? {
         val jedis = Jedis.get()
-        val botState = jedis.hget(userId.toString(), RedisParams.STATE.name)
+        val botState = enumValueOf<BotState>(jedis.hget(userId.toString(), RedisParams.STATE.name))
         if (!jedis.hexists(userId.toString(), RedisParams.FRIEND_ID.name)
-            || botState == BotState.EXPECTING_COMMAND.name
+            || botState == BotState.EXPECTING_COMMAND
         ) return null
         val buttons: MutableList<MutableList<InlineKeyboardButton>> = ArrayList()
         val row: MutableList<InlineKeyboardButton> = ArrayList()

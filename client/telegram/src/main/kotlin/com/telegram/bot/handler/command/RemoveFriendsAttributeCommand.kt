@@ -25,21 +25,21 @@ class RemoveFriendsAttributeCommand(
     }
 
     override fun nextState(userId: Long): BotState {
-        val botState = Jedis.get().hget(userId.toString(), RedisParams.STATE.name)
+        val botState = enumValueOf<BotState>(Jedis.get().hget(userId.toString(), RedisParams.STATE.name))
         return when (botState) {
-            BotState.EXPECTING_COMMAND.name -> BotState.EXPECTING_FRIEND_NAME
-            BotState.EXPECTING_FRIEND_NAME.name, BotState.EXECUTE_USING_STORAGE.name -> BotState.EXPECTING_ATTRIBUTE_NAME
-            BotState.EXPECTING_ATTRIBUTE_NAME.name -> BotState.EXPECTING_COMMAND
+            BotState.EXPECTING_COMMAND -> BotState.EXPECTING_FRIEND_NAME
+            BotState.EXPECTING_FRIEND_NAME, BotState.EXECUTE_USING_STORAGE -> BotState.EXPECTING_ATTRIBUTE_NAME
+            BotState.EXPECTING_ATTRIBUTE_NAME -> BotState.EXPECTING_COMMAND
             else -> BotState.EXPECTING_COMMAND
         }
     }
 
     override fun getMessage(user: UserDTO, message: String): String {
         val jedis = Jedis.get()
-        val botState = jedis.hget(user.id.toString(), RedisParams.STATE.name)
+        val botState = enumValueOf<BotState>(jedis.hget(user.id.toString(), RedisParams.STATE.name))
         return when (botState) {
-            BotState.EXPECTING_COMMAND.name -> "Which friend would you like to remove attribute from?"
-            BotState.EXPECTING_FRIEND_NAME.name -> {
+            BotState.EXPECTING_COMMAND -> "Which friend would you like to remove attribute from?"
+            BotState.EXPECTING_FRIEND_NAME -> {
                 return try {
                     val friend = userRequestService.getFriendByName(user.id, message)
                     jedis.hset(user.id.toString(), RedisParams.FRIEND_ID.name, friend.id.toString())
@@ -49,8 +49,8 @@ class RemoveFriendsAttributeCommand(
                     e.message!!
                 }
             }
-            BotState.EXECUTE_USING_STORAGE.name -> "What attribute would you like to remove?"
-            BotState.EXPECTING_ATTRIBUTE_NAME.name -> {
+            BotState.EXECUTE_USING_STORAGE -> "What attribute would you like to remove?"
+            BotState.EXPECTING_ATTRIBUTE_NAME -> {
                 return try {
                     jedis.addToCommandsQueue(user.id, Commands.FRIEND_INFO + Commands.STORAGE)
                     val friendId = jedis.hget(user.id.toString(), RedisParams.FRIEND_ID.name).toLong()
