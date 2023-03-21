@@ -21,43 +21,67 @@ class HttpRequestBuilder {
         )
     }
 
-    fun get(url: String): ResponseDTO {
-        return getResponse(url.httpGet().response())
+    fun get(url: String, accessToken: String? = null): ResponseDTO {
+        return getResponse(url.httpGet()
+            .apply { accessToken?.let { header("Authorization", it) } }
+            .response())
     }
 
-    fun <T> get(url: String, obj: T): ResponseDTO {
+    fun <T> get(url: String, obj: T, accessToken: String? = null): ResponseDTO {
         val json = if (obj is String) obj
         else klaxon.toJsonString(obj)
-        return getResponse(url.httpGet().body(json).header("Content-Type" to "application/json").response())
+        return getResponse(url.httpGet()
+            .body(json)
+            .header("Content-Type" to "application/json")
+            .apply { accessToken?.let { header("Authorization", it) } }
+            .response())
     }
 
-    fun post(url: String): ResponseDTO {
-        return getResponse(url.httpPost().response())
+    fun post(url: String, accessToken: String? = null): ResponseDTO {
+        return getResponse(url.httpPost()
+            .apply { accessToken?.let { header("Authorization", it) } }
+            .response())
     }
 
-    fun <T> post(url: String, obj: T): ResponseDTO {
+    fun <T> post(url: String, obj: T, accessToken: String? = null): ResponseDTO {
         val json = if (obj is String) obj
         else klaxon.toJsonString(obj)
-        return getResponse(url.httpPost().body(json).header("Content-Type" to "application/json").response())
+        return getResponse(url.httpPost()
+            .body(json)
+            .header("Content-Type" to "application/json")
+            .apply { accessToken?.let { header("Authorization", it) } }
+            .response())
     }
 
-    fun put(url: String): ResponseDTO {
-        return getResponse(url.httpPut().response())
+    fun put(url: String, accessToken: String? = null): ResponseDTO {
+        return getResponse(url.httpPut()
+            .apply { accessToken?.let { header("Authorization", it) } }
+            .response())
     }
 
-    fun <T> put(url: String, obj: T): ResponseDTO {
+    fun <T> put(url: String, obj: T, accessToken: String? = null): ResponseDTO {
         val json = if (obj is String) obj
         else klaxon.toJsonString(obj)
-        return getResponse(url.httpPut().body(json).header("Content-Type" to "application/json").response())
+        return getResponse(url.httpPut()
+            .body(json)
+            .header("Content-Type" to "application/json")
+            .apply { accessToken?.let { header("Authorization", it) } }
+            .response())
     }
 
-    fun delete(url: String): ResponseDTO {
-        return getResponse(url.httpDelete().response())
+    fun delete(url: String, accessToken: String? = null): ResponseDTO {
+        return getResponse(url.httpDelete()
+            .apply { accessToken?.let { header("Authorization", it) } }
+            .response())
     }
 
-    fun <T> delete(url: String, obj: T): ResponseDTO {
+    fun <T> delete(url: String, obj: T, accessToken: String? = null): ResponseDTO {
         val json = if (obj is String) obj
         else klaxon.toJsonString(obj)
-        return getResponse(url.httpDelete().body(json).header("Content-Type" to "application/json").response())
+        return getResponse(url.httpDelete()
+            .body(json)
+            .header("Content-Type" to "application/json")
+            .apply { accessToken?.let { header("Authorization", it) } }
+            .response())
     }
 }

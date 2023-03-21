@@ -13,6 +13,8 @@ data class Friend(
     @NotNull
     var name: String,
 
+    val ownerId: Long,
+
     @ElementCollection(fetch = FetchType.EAGER)
     val attributes: MutableMap<String, String?>
 )

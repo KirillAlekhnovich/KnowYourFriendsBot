@@ -8,7 +8,9 @@ import com.backend.kyf.entity.User
 import com.backend.kyf.exception.*
 import com.backend.kyf.repository.FriendRepository
 import com.backend.kyf.repository.UserRepository
+import com.backend.kyf.utils.auth.AuthService
 import com.backend.kyf.utils.CorrectnessChecker.isCorrect
+import com.backend.kyf.utils.auth.Jedis
 import com.backend.kyf.utils.mapper.FriendMapper
 import com.backend.kyf.utils.mapper.UserMapper
 import org.springframework.data.repository.findByIdOrNull
@@ -20,11 +22,14 @@ class UserService(
     private val userMapper: UserMapper,
     private val friendMapper: FriendMapper,
     private val friendService: FriendService,
-    private val friendRepository: FriendRepository
+    private val friendRepository: FriendRepository,
+    private val authService: AuthService
 ) {
 
     fun registerUser(userId: Long): UserDTO {
+        if (exists(userId)) throw UserAlreadyExistsException()
         val user = User(userId, emptySet<Friend>().toMutableSet(), emptySet<String>().toMutableSet())
+        Jedis.get().hset(userId.toString(), "accessToken", authService.generateAccessToken(userId))
         userRepository.save(user)
         return userMapper.toDTO(user)
     }
@@ -44,7 +49,7 @@ class UserService(
     fun reset(userId: Long) {
         val user = getUserById(userId)
         user.friends.forEach {
-            friendService.deleteFriend(it.id)
+            friendService.deleteFriend(userId, it.id)
         }
         user.friends.clear()
         user.generalAttributes.clear()
@@ -58,7 +63,7 @@ class UserService(
 
         val friend = friendMapper.toEntity(friendService.createFriend(friendDTO))
         user.generalAttributes.forEach {
-            friendService.addAttribute(friend.id, AttributeDTO(it, "Not set"))
+            friendService.addAttribute(userId, friend.id, AttributeDTO(it, "Not set"))
         }
         user.friends.add(friend)
         userRepository.save(user)
@@ -83,8 +88,8 @@ class UserService(
 
     fun removeFriend(userId: Long, friendId: Long): UserDTO {
         val user = getUserById(userId)
-        val friend = friendService.getFriendById(friendId)
-        friendService.deleteFriend(friendId)
+        val friend = friendService.getFriendById(userId, friendId)
+        friendService.deleteFriend(userId, friendId)
         user.friends.remove(friend)
         return userMapper.toDTO(user)
     }

@@ -47,7 +47,7 @@ class FriendInfoCommand(
                 try {
                     val friend = userRequestService.getFriendByName(user.id, message)
                     jedis.hset(user.id.toString(), RedisParams.FRIEND_ID.name, friend.id.toString())
-                    printFriendInfo(friend.id)
+                    printFriendInfo(user.id, friend.id)
                 } catch (e: RuntimeException) {
                     jedis.addToCommandsQueue(user.id, Commands.LIST_FRIENDS + Commands.STORAGE)
                     e.message!!
@@ -56,7 +56,7 @@ class FriendInfoCommand(
             BotState.EXECUTE_USING_STORAGE -> {
                 try {
                     val friendId = jedis.hget(user.id.toString(), RedisParams.FRIEND_ID.name).toLong()
-                    printFriendInfo(friendId)
+                    printFriendInfo(user.id, friendId)
                 } catch (e: RuntimeException) {
                     jedis.addToCommandsQueue(user.id, Commands.LIST_FRIENDS + Commands.STORAGE)
                     e.message!!
@@ -91,9 +91,9 @@ class FriendInfoCommand(
         return createInlineMarkup(buttons)
     }
 
-    private fun printFriendInfo(friendId: Long): String {
-        val friend = friendRequestService.getFriend(friendId)
-        val attributes = friendRequestService.getAttributes(friendId)
+    private fun printFriendInfo(userId: Long, friendId: Long): String {
+        val friend = friendRequestService.getFriend(userId, friendId)
+        val attributes = friendRequestService.getAttributes(userId, friendId)
         val stringBuilder = StringBuilder()
         for ((name, value) in attributes) {
             stringBuilder.append("$name: $value\n")

@@ -22,35 +22,37 @@ class FriendService(
         return friendMapper.toDTO(friend)
     }
 
-    fun getFriendById(friendId: Long): Friend {
-        return friendRepository.findByIdOrNull(friendId) ?: throw FriendDoesNotExistException()
+    fun getFriendById(userId: Long, friendId: Long): Friend {
+        val friend = friendRepository.findByIdOrNull(friendId) ?: throw FriendDoesNotExistException()
+        if (friend.ownerId != userId) throw AccessDeniedException()
+        return friend
     }
 
-    fun getFriendDTOById(friendId: Long): FriendDTO {
-        return friendMapper.toDTO(getFriendById(friendId))
+    fun getFriendDTOById(userId: Long, friendId: Long): FriendDTO {
+        return friendMapper.toDTO(getFriendById(userId, friendId))
     }
 
-    fun updateFriend(friendId: Long, newFriendDTO: FriendDTO): FriendDTO {
-        val modifiedFriend = getFriendById(friendId)
+    fun updateFriend(userId: Long, friendId: Long, newFriendDTO: FriendDTO): FriendDTO {
+        val modifiedFriend = getFriendById(userId, friendId)
         // TODO()
         return friendMapper.toDTO(modifiedFriend)
     }
 
-    fun deleteFriend(friendId: Long) {
+    fun deleteFriend(userId: Long, friendId: Long) {
         friendRepository.deleteById(friendId)
     }
 
-    fun addAttribute(friendId: Long, attributeDTO: AttributeDTO): FriendDTO {
-        val modifiedFriend = getFriendById(friendId)
+    fun addAttribute(userId: Long, friendId: Long, attributeDTO: AttributeDTO): FriendDTO {
+        val modifiedFriend = getFriendById(userId, friendId)
         if (!attributeDTO.name.isCorrect()) throw InvalidAttributeNameException()
-        if (hasAttribute(friendId, attributeDTO.name)) throw AttributeAlreadyExistsException()
+        if (hasAttribute(userId, friendId, attributeDTO.name)) throw AttributeAlreadyExistsException()
         modifiedFriend.attributes[attributeDTO.name] = attributeDTO.value
         friendRepository.save(modifiedFriend)
         return friendMapper.toDTO(modifiedFriend)
     }
 
-    fun getAttributes(friendId: Long): List<AttributeDTO> {
-        val modifiedFriend = getFriendById(friendId)
+    fun getAttributes(userId: Long, friendId: Long): List<AttributeDTO> {
+        val modifiedFriend = getFriendById(userId, friendId)
         val attributes = mutableListOf<AttributeDTO>()
         for ((name, value) in modifiedFriend.attributes) {
             attributes.add(AttributeDTO(name, value))
@@ -58,8 +60,8 @@ class FriendService(
         return attributes.sortedBy { it.name }
     }
 
-    fun getAttributeNames(friendId: Long): List<String> {
-        val modifiedFriend = getFriendById(friendId)
+    fun getAttributeNames(userId: Long, friendId: Long): List<String> {
+        val modifiedFriend = getFriendById(userId, friendId)
         val attributeNames = mutableListOf<String>()
         for ((name, _) in modifiedFriend.attributes) {
             attributeNames.add(name)
@@ -67,22 +69,22 @@ class FriendService(
         return attributeNames.sorted()
     }
 
-    fun updateAttribute(friendId: Long, attributeDTO: AttributeDTO): FriendDTO {
-        val modifiedFriend = getFriendById(friendId)
-        if (!hasAttribute(friendId, attributeDTO.name)) throw AttributeDoesNotExistException()
+    fun updateAttribute(userId: Long, friendId: Long, attributeDTO: AttributeDTO): FriendDTO {
+        val modifiedFriend = getFriendById(userId, friendId)
+        if (!hasAttribute(userId, friendId, attributeDTO.name)) throw AttributeDoesNotExistException()
         modifiedFriend.attributes[attributeDTO.name] = attributeDTO.value
         friendRepository.save(modifiedFriend)
         return friendMapper.toDTO(modifiedFriend)
     }
 
-    fun hasAttribute(friendId: Long, attributeName: String): Boolean {
-        val modifiedFriend = getFriendById(friendId)
+    fun hasAttribute(userId: Long, friendId: Long, attributeName: String): Boolean {
+        val modifiedFriend = getFriendById(userId, friendId)
         return modifiedFriend.attributes.containsKey(attributeName)
     }
 
-    fun deleteAttribute(friendId: Long, attributeName: String): FriendDTO {
-        val modifiedFriend = getFriendById(friendId)
-        if (!hasAttribute(friendId, attributeName)) throw AttributeDoesNotExistException()
+    fun deleteAttribute(userId: Long, friendId: Long, attributeName: String): FriendDTO {
+        val modifiedFriend = getFriendById(userId, friendId)
+        if (!hasAttribute(userId, friendId, attributeName)) throw AttributeDoesNotExistException()
         modifiedFriend.attributes.remove(attributeName)
         friendRepository.save(modifiedFriend)
         return friendMapper.toDTO(modifiedFriend)

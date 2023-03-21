@@ -58,8 +58,10 @@ class TelegramBotConfig(
     }
 
     private fun getUser(chatId: Long): UserDTO {
-        return if (!userRequestService.exists(chatId)) userRequestService.registerUser(chatId)
-        else userRequestService.getUser(chatId)
+        if (!userRequestService.exists(chatId)) {
+            Jedis.get().hset(chatId.toString(), RedisParams.ACCESS_TOKEN.name, userRequestService.registerUser(chatId))
+        }
+        return userRequestService.getUser(chatId)
     }
 
     private fun redisInitialSetup(chatId: Long, messageId: String) {

@@ -52,7 +52,7 @@ class AddFriendsAttributeCommand(
             BotState.EXPECTING_ATTRIBUTE_NAME -> {
                 try {
                     val friendId = jedis.hget(user.id.toString(), RedisParams.FRIEND_ID.name).toLong()
-                    if (friendRequestService.hasAttribute(friendId, message)) {
+                    if (friendRequestService.hasAttribute(user.id, friendId, message)) {
                         jedis.hset(user.id.toString(), RedisParams.STATE.name, BotState.ERROR.name)
                         return "Friend already has attribute with name $message"
                     }
@@ -68,7 +68,7 @@ class AddFriendsAttributeCommand(
                     jedis.addToCommandsQueue(user.id, Commands.FRIEND_INFO + Commands.STORAGE)
                     val friendId = jedis.hget(user.id.toString(), RedisParams.FRIEND_ID.name).toLong()
                     val attributeName = jedis.hget(user.id.toString(), RedisParams.ATTRIBUTE_NAME.name)
-                    friendRequestService.addAttribute(friendId, AttributeDTO(attributeName, message))
+                    friendRequestService.addAttribute(user.id, friendId, AttributeDTO(attributeName, message))
                 } catch (e: RuntimeException) {
                     jedis.hset(user.id.toString(), RedisParams.STATE.name, BotState.ERROR.name)
                     e.message!!

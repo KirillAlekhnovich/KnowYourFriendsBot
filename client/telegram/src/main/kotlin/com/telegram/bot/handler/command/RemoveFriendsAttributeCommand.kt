@@ -54,7 +54,7 @@ class RemoveFriendsAttributeCommand(
                 return try {
                     jedis.addToCommandsQueue(user.id, Commands.FRIEND_INFO + Commands.STORAGE)
                     val friendId = jedis.hget(user.id.toString(), RedisParams.FRIEND_ID.name).toLong()
-                    friendRequestService.deleteAttribute(friendId, message)
+                    friendRequestService.deleteAttribute(user.id, friendId, message)
                 } catch (e: RuntimeException) {
                     jedis.hset(user.id.toString(), RedisParams.STATE.name, BotState.ERROR.name)
                     e.message!!

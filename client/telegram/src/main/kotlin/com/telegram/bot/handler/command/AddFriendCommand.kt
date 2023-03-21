@@ -37,7 +37,7 @@ class AddFriendCommand(
             BotState.EXPECTING_COMMAND -> "Please enter the name of the friend"
             BotState.EXPECTING_FRIEND_NAME -> {
                 jedis.addToCommandsQueue(user.id, Commands.LIST_FRIENDS)
-                userRequestService.addFriend(user.id, FriendDTO(0, message, emptyMap<String, String?>().toMutableMap()))
+                userRequestService.addFriend(user.id, FriendDTO(0, message, user.id, emptyMap<String, String?>().toMutableMap()))
             }
             else -> CommandsMap.get(Commands.UNKNOWN).getMessage(user, message)
         }

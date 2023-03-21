@@ -2,6 +2,7 @@ package com.telegram.bot.service
 
 import com.telegram.bot.dto.*
 import com.telegram.bot.utils.HttpRequestBuilder
+import com.telegram.bot.utils.Jedis.getAccessToken
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
@@ -13,38 +14,38 @@ class FriendRequestService(
     @Value("\${backend.url}/friends")
     private lateinit var friendsEndpoint: String
 
-    fun getFriend(friendId: Long): FriendDTO {
+    fun getFriend(userId: Long, friendId: Long): FriendDTO {
         val url = "$friendsEndpoint/$friendId"
-        return httpRequestBuilder.get(url).getObjectFromData()
+        return httpRequestBuilder.get(url, getAccessToken(userId)).getObjectFromData()
     }
 
-    fun addAttribute(friendId: Long, attribute: AttributeDTO): String {
+    fun addAttribute(userId: Long, friendId: Long, attribute: AttributeDTO): String {
         val url = "$friendsEndpoint/$friendId/add_attribute"
-        return httpRequestBuilder.put(url, attribute).getMessage()
+        return httpRequestBuilder.put(url, attribute, getAccessToken(userId)).getMessage()
     }
 
-    fun getAttributes(friendId: Long): List<AttributeDTO> {
+    fun getAttributes(userId: Long, friendId: Long): List<AttributeDTO> {
         val url = "$friendsEndpoint/$friendId/attributes"
-        return httpRequestBuilder.get(url).getListFromData()
+        return httpRequestBuilder.get(url, getAccessToken(userId)).getListFromData()
     }
 
-    fun getAttributeNames(friendId: Long): List<String> {
+    fun getAttributeNames(userId: Long, friendId: Long): List<String> {
         val url = "$friendsEndpoint/$friendId/attribute_names"
-        return httpRequestBuilder.get(url).getListFromData()
+        return httpRequestBuilder.get(url, getAccessToken(userId)).getListFromData()
     }
 
-    fun updateAttribute(friendId: Long, attribute: AttributeDTO): String {
+    fun updateAttribute(userId: Long, friendId: Long, attribute: AttributeDTO): String {
         val url = "$friendsEndpoint/$friendId/update_attribute"
-        return httpRequestBuilder.put(url, attribute).getMessage()
+        return httpRequestBuilder.put(url, attribute, getAccessToken(userId)).getMessage()
     }
 
-    fun hasAttribute(friendId: Long, attributeName: String): Boolean {
+    fun hasAttribute(userId: Long, friendId: Long, attributeName: String): Boolean {
         val url = "$friendsEndpoint/$friendId/has_attribute/$attributeName"
-        return httpRequestBuilder.get(url).getData() == "true"
+        return httpRequestBuilder.get(url, getAccessToken(userId)).getData() == "true"
     }
 
-    fun deleteAttribute(friendId: Long, attributeName: String): String {
+    fun deleteAttribute(userId: Long, friendId: Long, attributeName: String): String {
         val url = "$friendsEndpoint/$friendId/delete_attribute"
-        return httpRequestBuilder.delete(url, attributeName).getMessage()
+        return httpRequestBuilder.delete(url, attributeName, getAccessToken(userId)).getMessage()
     }
 }

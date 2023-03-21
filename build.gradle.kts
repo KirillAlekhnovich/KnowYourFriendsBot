@@ -1,3 +1,4 @@
+import libs.Jedis.jedis
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import libs.Kotlin.kotlin
 import libs.Postgresql.postgresql
@@ -49,6 +50,7 @@ subprojects {
     }
 
     dependencies {
+        jedis()
         kotlin()
         spring()
         springTest()

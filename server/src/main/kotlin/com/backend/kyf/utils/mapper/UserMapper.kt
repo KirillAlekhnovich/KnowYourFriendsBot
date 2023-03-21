@@ -10,7 +10,7 @@ class UserMapper: Mapper<UserDTO, User> {
     override fun toDTO(entity: User): UserDTO {
         return UserDTO(
             entity.id,
-            entity.friends.map { FriendDTO(it.id, it.name, it.attributes) }.toMutableSet(),
+            entity.friends.map { FriendDTO(it.id, it.name, entity.id, it.attributes) }.toMutableSet(),
             entity.generalAttributes
         )
     }

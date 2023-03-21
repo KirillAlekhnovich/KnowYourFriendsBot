@@ -54,7 +54,7 @@ class UpdateFriendsAttributeCommand(
             BotState.EXPECTING_ATTRIBUTE_NAME -> {
                 try {
                     val friendId = jedis.hget(user.id.toString(), RedisParams.FRIEND_ID.name).toLong()
-                    if (!friendRequestService.hasAttribute(friendId, message)) {
+                    if (!friendRequestService.hasAttribute(user.id, friendId, message)) {
                         jedis.hset(user.id.toString(), RedisParams.STATE.name, BotState.ERROR.name)
                         "Friend doesn't have attribute with name $message"
                     } else {
@@ -72,6 +72,7 @@ class UpdateFriendsAttributeCommand(
                     val friendId = jedis.hget(user.id.toString(), RedisParams.FRIEND_ID.name).toLong()
                     val attributeName = jedis.hget(user.id.toString(), RedisParams.ATTRIBUTE_NAME.name)
                     friendRequestService.updateAttribute(
+                        user.id,
                         friendId,
                         AttributeDTO(attributeName, message)
                     )

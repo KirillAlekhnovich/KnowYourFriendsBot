@@ -10,7 +10,12 @@ object Jedis {
     fun get(): Jedis = jedis
 
     fun Jedis.reset(userId: Long) {
-        jedis.del(userId.toString())
+        val keys = jedis.keys("user:$userId:*")
+        keys.forEach {
+            if (it != "user:$userId:${RedisParams.ACCESS_TOKEN}") {
+                jedis.del(it)
+            }
+        }
     }
 
     private fun constructField(userId: Long, field: String): String {
@@ -43,5 +48,10 @@ object Jedis {
 
     fun Jedis.incrementCurrentPage(userId: Long, incrValue: Long) {
         jedis.incrBy(constructField(userId, RedisParams.CURRENT_PAGE.name), incrValue)
+    }
+
+    fun getAccessToken(userId: Long): String? {
+        if (jedis.hget(userId.toString(), RedisParams.ACCESS_TOKEN.name) == null) return null
+        return "Bearer " + jedis.hget(userId.toString(), RedisParams.ACCESS_TOKEN.name)
     }
 }
