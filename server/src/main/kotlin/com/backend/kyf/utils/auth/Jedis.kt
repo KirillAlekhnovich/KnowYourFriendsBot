@@ -7,5 +7,11 @@ object Jedis {
 
     private val jedis = Jedis(URI(System.getenv("RedisURL")))
 
-    fun get(): Jedis = jedis
+    fun setValue(userId: Long, key: String, value: String) {
+        jedis.hset(userId.toString(), key, value)
+    }
+
+    fun getValue(userId: Long, key: String): String? {
+        return jedis.hget(userId.toString(), key)
+    }
 }

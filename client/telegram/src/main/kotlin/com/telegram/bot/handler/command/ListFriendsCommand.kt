@@ -8,7 +8,9 @@ import com.telegram.bot.handler.Buttons.createRowInstance
 import com.telegram.bot.service.UserRequestService
 import com.telegram.bot.utils.Commands
 import com.telegram.bot.utils.Jedis
+import com.telegram.bot.utils.Jedis.deleteValue
 import com.telegram.bot.utils.Jedis.getCurrentPage
+import com.telegram.bot.utils.Jedis.setValue
 import com.telegram.bot.utils.Paging
 import com.telegram.bot.utils.Paging.getPage
 import com.telegram.bot.utils.RedisParams
@@ -33,13 +35,12 @@ class ListFriendsCommand(
     }
 
     override fun execute(user: UserDTO, message: String): ClientResponseDTO {
-        Jedis.get().hset(user.id.toString(), RedisParams.CURRENT_PAGE.name, "1")
+        setValue(user.id, RedisParams.CURRENT_PAGE.name, "1")
         return ClientResponseDTO(getMessage(user, message), getButtons(user.id))
     }
 
     override fun getMessage(user: UserDTO, message: String): String {
-        val jedis = Jedis.get()
-        jedis.hdel(user.id.toString(), RedisParams.FRIEND_ID.name)
+        deleteValue(user.id, RedisParams.FRIEND_ID.name)
         val friends = userRequestService.getFriendNames(user.id)
         return if (friends.isEmpty())  "You have no friends :("
         else generateFriendsList(user.id, friends)
@@ -49,7 +50,7 @@ class ListFriendsCommand(
         val buttons: MutableList<MutableList<InlineKeyboardButton>> = ArrayList()
         val row: MutableList<InlineKeyboardButton> = ArrayList()
 
-        val currentPage = Jedis.get().getCurrentPage(userId)
+        val currentPage = getCurrentPage(userId)
         if (currentPage > 1) {
             row.add(createInlineButton("Previous page", Commands.PREVIOUS_PAGE))
         }
@@ -71,10 +72,9 @@ class ListFriendsCommand(
     }
 
     private fun generateFriendsList(userId: Long, friends: List<String>): String {
-        val jedis = Jedis.get()
         val stringBuilder = StringBuilder()
         var index = 1
-        val page = jedis.getCurrentPage(userId)
+        val page = getCurrentPage(userId)
         val totalPages = ceil(friends.size.toDouble() / Paging.ITEMS_PER_PAGE).toInt()
         stringBuilder.append("List of your friends:\n\n")
         if (page > 1) index = (page - 1) * Paging.ITEMS_PER_PAGE + 1

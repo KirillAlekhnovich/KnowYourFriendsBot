@@ -4,7 +4,6 @@ import com.telegram.bot.dto.UserDTO
 import com.telegram.bot.handler.BotState
 import com.telegram.bot.service.UserRequestService
 import com.telegram.bot.utils.Commands
-import com.telegram.bot.utils.Jedis
 import com.telegram.bot.utils.Jedis.reset
 import org.springframework.stereotype.Component
 import javax.inject.Named
@@ -24,7 +23,7 @@ class ResetCommand(
     }
 
     override fun getMessage(user: UserDTO, message: String): String {
-        Jedis.get().reset(user.id)
+        reset(user.id)
         userRequestService.resetUser(user.id)
         return "Your profile has been reset"
     }

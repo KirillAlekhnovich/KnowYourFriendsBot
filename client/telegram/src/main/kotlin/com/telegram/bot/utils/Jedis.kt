@@ -7,9 +7,23 @@ object Jedis {
 
     private val jedis = Jedis(URI(System.getenv("RedisURL")))
 
-    fun get(): Jedis = jedis
+    fun setValue(userId: Long, key: String, value: String) {
+        jedis.hset(userId.toString(), key, value)
+    }
 
-    fun Jedis.reset(userId: Long) {
+    fun getValue(userId: Long, key: String): String? {
+        return jedis.hget(userId.toString(), key)
+    }
+
+    fun deleteValue(userId: Long, key: String) {
+        jedis.hdel(userId.toString(), key)
+    }
+
+    fun exists(userId: Long, key: String): Boolean {
+        return jedis.hexists(userId.toString(), key)
+    }
+
+    fun reset(userId: Long) {
         val keys = jedis.keys("user:$userId:*")
         keys.forEach {
             if (it != "user:$userId:${RedisParams.ACCESS_TOKEN}") {
@@ -22,31 +36,31 @@ object Jedis {
         return "user:$userId:$field"
     }
 
-    fun Jedis.getCommandsQueue(userId: Long): List<String> {
+    fun getCommandsQueue(userId: Long): List<String> {
         return jedis.lrange(constructField(userId, RedisParams.COMMANDS_QUEUE.name), 0, -1)
     }
 
-    fun Jedis.addToCommandsQueue(userId: Long, command: String) {
+    fun addToCommandsQueue(userId: Long, command: String) {
         jedis.rpush(constructField(userId, RedisParams.COMMANDS_QUEUE.name), command)
     }
 
-    fun Jedis.addToCommandsQueue(userId: Long, commandsQueue: List<String>) {
+    fun addToCommandsQueue(userId: Long, commandsQueue: List<String>) {
         jedis.rpush(constructField(userId, RedisParams.COMMANDS_QUEUE.name), commandsQueue.joinToString(","))
     }
 
-    fun Jedis.removeFirstCommandFromQueue(userId: Long) {
+    fun removeFirstCommandFromQueue(userId: Long) {
         jedis.lpop(constructField(userId, RedisParams.COMMANDS_QUEUE.name))
     }
 
-    fun Jedis.getCurrentPage(userId: Long): Int {
+    fun getCurrentPage(userId: Long): Int {
         return jedis.get(constructField(userId, RedisParams.CURRENT_PAGE.name))?.toInt() ?: 1
     }
 
-    fun Jedis.setCurrentPage(userId: Long, page: Int) {
+    fun setCurrentPage(userId: Long, page: Int) {
         jedis.set(constructField(userId, RedisParams.CURRENT_PAGE.name), page.toString())
     }
 
-    fun Jedis.incrementCurrentPage(userId: Long, incrValue: Long) {
+    fun incrementCurrentPage(userId: Long, incrValue: Long) {
         jedis.incrBy(constructField(userId, RedisParams.CURRENT_PAGE.name), incrValue)
     }
 

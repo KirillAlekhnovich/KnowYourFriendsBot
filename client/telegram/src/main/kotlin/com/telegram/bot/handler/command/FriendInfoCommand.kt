@@ -11,6 +11,9 @@ import com.telegram.bot.utils.Commands
 import com.telegram.bot.utils.CommandsMap
 import com.telegram.bot.utils.Jedis
 import com.telegram.bot.utils.Jedis.addToCommandsQueue
+import com.telegram.bot.utils.Jedis.exists
+import com.telegram.bot.utils.Jedis.getValue
+import com.telegram.bot.utils.Jedis.setValue
 import com.telegram.bot.utils.RedisParams
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard
@@ -29,7 +32,7 @@ class FriendInfoCommand(
     }
 
     override fun nextState(userId: Long): BotState {
-        val botState = enumValueOf<BotState>(Jedis.get().hget(userId.toString(), RedisParams.STATE.name))
+        val botState = enumValueOf<BotState>(getValue(userId, RedisParams.STATE.name)!!)
         return when (botState) {
             BotState.EXPECTING_COMMAND -> BotState.EXPECTING_FRIEND_NAME
             BotState.EXPECTING_FRIEND_NAME -> BotState.EXPECTING_COMMAND
@@ -39,26 +42,25 @@ class FriendInfoCommand(
     }
 
     override fun getMessage(user: UserDTO, message: String): String {
-        val jedis = Jedis.get()
-        val botState = enumValueOf<BotState>(jedis.hget(user.id.toString(), RedisParams.STATE.name))
+        val botState = enumValueOf<BotState>(getValue(user.id, RedisParams.STATE.name)!!)
         return when (botState) {
             BotState.EXPECTING_COMMAND -> "Please enter the name of the friend"
             BotState.EXPECTING_FRIEND_NAME -> {
                 try {
                     val friend = userRequestService.getFriendByName(user.id, message)
-                    jedis.hset(user.id.toString(), RedisParams.FRIEND_ID.name, friend.id.toString())
+                    setValue(user.id, RedisParams.FRIEND_ID.name, friend.id.toString())
                     printFriendInfo(user.id, friend.id)
                 } catch (e: RuntimeException) {
-                    jedis.addToCommandsQueue(user.id, Commands.LIST_FRIENDS + Commands.STORAGE)
+                    addToCommandsQueue(user.id, Commands.LIST_FRIENDS + Commands.STORAGE)
                     e.message!!
                 }
             }
             BotState.EXECUTE_USING_STORAGE -> {
                 try {
-                    val friendId = jedis.hget(user.id.toString(), RedisParams.FRIEND_ID.name).toLong()
+                    val friendId = getValue(user.id, RedisParams.FRIEND_ID.name)!!.toLong()
                     printFriendInfo(user.id, friendId)
                 } catch (e: RuntimeException) {
-                    jedis.addToCommandsQueue(user.id, Commands.LIST_FRIENDS + Commands.STORAGE)
+                    addToCommandsQueue(user.id, Commands.LIST_FRIENDS + Commands.STORAGE)
                     e.message!!
                 }
             }
@@ -67,11 +69,9 @@ class FriendInfoCommand(
     }
 
     override fun getButtons(userId: Long): ReplyKeyboard? {
-        val jedis = Jedis.get()
-        val botState = enumValueOf<BotState>(jedis.hget(userId.toString(), RedisParams.STATE.name))
-        if (!jedis.hexists(userId.toString(), RedisParams.FRIEND_ID.name)
-            || botState == BotState.EXPECTING_COMMAND
-        ) return null
+        val botState = enumValueOf<BotState>(getValue(userId, RedisParams.STATE.name)!!)
+
+        if (!exists(userId, RedisParams.FRIEND_ID.name) || botState == BotState.EXPECTING_COMMAND) return null
         val buttons: MutableList<MutableList<InlineKeyboardButton>> = ArrayList()
         val row: MutableList<InlineKeyboardButton> = ArrayList()
 

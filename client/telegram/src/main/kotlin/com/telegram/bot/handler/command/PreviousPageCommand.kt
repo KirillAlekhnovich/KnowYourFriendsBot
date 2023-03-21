@@ -27,7 +27,7 @@ class PreviousPageCommand : Command {
     }
 
     override fun getMessage(user: UserDTO, message: String): String {
-        Jedis.get().incrementCurrentPage(user.id, -1)
+        incrementCurrentPage(user.id, -1)
         return CommandsMap.get(Commands.LIST_FRIENDS).getMessage(user, message)
     }
 

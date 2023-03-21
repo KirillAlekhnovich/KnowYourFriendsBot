@@ -11,6 +11,7 @@ import com.backend.kyf.repository.UserRepository
 import com.backend.kyf.utils.auth.AuthService
 import com.backend.kyf.utils.CorrectnessChecker.isCorrect
 import com.backend.kyf.utils.auth.Jedis
+import com.backend.kyf.utils.auth.Jedis.setValue
 import com.backend.kyf.utils.mapper.FriendMapper
 import com.backend.kyf.utils.mapper.UserMapper
 import org.springframework.data.repository.findByIdOrNull
@@ -29,7 +30,7 @@ class UserService(
     fun registerUser(userId: Long): UserDTO {
         if (exists(userId)) throw UserAlreadyExistsException()
         val user = User(userId, emptySet<Friend>().toMutableSet(), emptySet<String>().toMutableSet())
-        Jedis.get().hset(userId.toString(), "accessToken", authService.generateAccessToken(userId))
+        setValue(userId, "accessToken", authService.generateAccessToken(userId))
         userRepository.save(user)
         return userMapper.toDTO(user)
     }

@@ -4,6 +4,7 @@ import com.backend.kyf.dto.FriendDTO
 import com.backend.kyf.service.UserService
 import com.backend.kyf.utils.auth.ClientIPs
 import com.backend.kyf.utils.auth.Jedis
+import com.backend.kyf.utils.auth.Jedis.getValue
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
@@ -31,7 +32,7 @@ class UserController(
             return ResponseEntity.badRequest().body("IP address is not allowed to connect to this server")
         }
         userService.registerUser(userId)
-        return ResponseEntity.ok(generateResponseJson("User created", Jedis.get().hget(userId.toString(), "accessToken")))
+        return ResponseEntity.ok(generateResponseJson("User created", getValue(userId, "accessToken")!!))
     }
 
     @GetMapping("/exists/{userId}")

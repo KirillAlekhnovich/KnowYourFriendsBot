@@ -3,6 +3,7 @@ package com.telegram.bot.handler
 import com.telegram.bot.service.FriendRequestService
 import com.telegram.bot.utils.Commands
 import com.telegram.bot.utils.Jedis
+import com.telegram.bot.utils.Jedis.getValue
 import com.telegram.bot.utils.RedisParams
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard
@@ -46,11 +47,10 @@ object Buttons {
     }
 
     fun createAttributesMarkup(userId: Long, friendRequestService: FriendRequestService): ReplyKeyboard? {
-        val jedis = Jedis.get()
-        val botState = enumValueOf<BotState>(jedis.hget(userId.toString(), RedisParams.STATE.name))
+        val botState = enumValueOf<BotState>(getValue(userId, RedisParams.STATE.name)!!)
         if (botState != BotState.EXPECTING_FRIEND_NAME && botState != BotState.EXECUTE_USING_STORAGE) return null
         return try {
-            val friendId = jedis.hget(userId.toString(), RedisParams.FRIEND_ID.name).toLong()
+            val friendId = getValue(userId, RedisParams.FRIEND_ID.name)!!.toLong()
             val friendAttributes = friendRequestService.getAttributeNames(userId, friendId)
             val buttons: MutableList<MutableList<InlineKeyboardButton>> = ArrayList()
             val row: MutableList<InlineKeyboardButton> = ArrayList()

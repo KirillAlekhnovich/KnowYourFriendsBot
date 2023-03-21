@@ -7,6 +7,7 @@ import com.telegram.bot.utils.Commands
 import com.telegram.bot.utils.CommandsMap
 import com.telegram.bot.utils.Jedis
 import com.telegram.bot.utils.Jedis.addToCommandsQueue
+import com.telegram.bot.utils.Jedis.getValue
 import com.telegram.bot.utils.RedisParams
 import org.springframework.stereotype.Component
 import javax.inject.Named
@@ -21,7 +22,7 @@ class RemoveFriendCommand(
     }
 
     override fun nextState(userId: Long): BotState {
-        val botState = enumValueOf<BotState>(Jedis.get().hget(userId.toString(), RedisParams.STATE.name))
+        val botState = enumValueOf<BotState>(getValue(userId, RedisParams.STATE.name)!!)
         return when (botState) {
             BotState.EXPECTING_COMMAND -> BotState.EXPECTING_FRIEND_NAME
             BotState.EXPECTING_FRIEND_NAME -> BotState.EXPECTING_COMMAND
@@ -30,13 +31,12 @@ class RemoveFriendCommand(
     }
 
     override fun getMessage(user: UserDTO, message: String): String {
-        val jedis = Jedis.get()
-        val botState = enumValueOf<BotState>(jedis.hget(user.id.toString(), RedisParams.STATE.name))
+        val botState = enumValueOf<BotState>(getValue(user.id, RedisParams.STATE.name)!!)
         return when (botState) {
             BotState.EXPECTING_COMMAND -> "Which friend would you like to remove?"
             BotState.EXPECTING_FRIEND_NAME -> {
                 try {
-                    jedis.addToCommandsQueue(user.id, Commands.LIST_FRIENDS)
+                    addToCommandsQueue(user.id, Commands.LIST_FRIENDS)
                     val friendId = userRequestService.getFriendByName(user.id, message).id
                     userRequestService.removeFriend(user.id, friendId)
                 } catch (e: RuntimeException) {
@@ -44,8 +44,8 @@ class RemoveFriendCommand(
                 }
             }
             BotState.EXECUTE_USING_STORAGE -> {
-                jedis.addToCommandsQueue(user.id, Commands.LIST_FRIENDS)
-                val friendId = jedis.hget(user.id.toString(), RedisParams.FRIEND_ID.name).toLong()
+                addToCommandsQueue(user.id, Commands.LIST_FRIENDS)
+                val friendId = getValue(user.id, RedisParams.FRIEND_ID.name)!!.toLong()
                 userRequestService.removeFriend(user.id, friendId)
             }
             else -> CommandsMap.get(Commands.UNKNOWN).getMessage(user, message)

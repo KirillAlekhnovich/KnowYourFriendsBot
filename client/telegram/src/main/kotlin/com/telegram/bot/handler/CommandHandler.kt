@@ -8,7 +8,9 @@ import com.telegram.bot.utils.CommandsMap
 import com.telegram.bot.utils.Jedis
 import com.telegram.bot.utils.Jedis.addToCommandsQueue
 import com.telegram.bot.utils.Jedis.getCommandsQueue
+import com.telegram.bot.utils.Jedis.getValue
 import com.telegram.bot.utils.Jedis.removeFirstCommandFromQueue
+import com.telegram.bot.utils.Jedis.setValue
 import com.telegram.bot.utils.RedisParams
 import org.springframework.stereotype.Component
 
@@ -31,16 +33,15 @@ class CommandHandler(private val commands: MutableMap<String, Command>) {
 
     fun handle(user: UserDTO, message: String): List<ClientResponseDTO> {
         val responseMessages = mutableListOf<ClientResponseDTO>()
-        val jedis = Jedis.get()
-        jedis.addToCommandsQueue(user.id, message)
-        while (jedis.getCommandsQueue(user.id).isNotEmpty()) {
-            if (jedis.getCommandsQueue(user.id).first().isCommand()) {
-                jedis.hset(user.id.toString(), RedisParams.STATE.name, jedis.getCommandsQueue(user.id).first().getState().name)
-                jedis.hset(user.id.toString(), RedisParams.COMMAND.name, jedis.getCommandsQueue(user.id).first().toCommand())
+        addToCommandsQueue(user.id, message)
+        while (getCommandsQueue(user.id).isNotEmpty()) {
+            if (getCommandsQueue(user.id).first().isCommand()) {
+                setValue(user.id, RedisParams.STATE.name, getCommandsQueue(user.id).first().getState().name)
+                setValue(user.id, RedisParams.COMMAND.name, getCommandsQueue(user.id).first().toCommand())
             }
-            val currCommand = CommandsMap.get(jedis.hget(user.id.toString(), RedisParams.COMMAND.name))
+            val currCommand = CommandsMap.get(getValue(user.id, RedisParams.COMMAND.name)!!)
             responseMessages.add(currCommand.execute(user, message))
-            jedis.removeFirstCommandFromQueue(user.id)
+            removeFirstCommandFromQueue(user.id)
         }
         return responseMessages
     }
