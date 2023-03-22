@@ -20,6 +20,11 @@ class ControllerAdvisor: ResponseEntityExceptionHandler() {
         return body
     }
 
+    @ExceptionHandler(AccessDeniedException::class)
+    fun handleAccessDeniedException(exception: AccessDeniedException): ResponseEntity<Any?>? {
+        return ResponseEntity(generateExceptionBody(exception), HttpStatus.UNAUTHORIZED)
+    }
+
     @ExceptionHandler(AttributeAlreadyExistsException::class)
     fun handleAttributeAlreadyExistsException(exception: AttributeAlreadyExistsException): ResponseEntity<Any?>? {
         return ResponseEntity(generateExceptionBody(exception), HttpStatus.CONFLICT)
@@ -48,6 +53,11 @@ class ControllerAdvisor: ResponseEntityExceptionHandler() {
     @ExceptionHandler(InvalidFriendNameException::class)
     fun handleInvalidFriendNameException(exception: InvalidFriendNameException): ResponseEntity<Any?>? {
         return ResponseEntity(generateExceptionBody(exception), HttpStatus.NOT_ACCEPTABLE)
+    }
+
+    @ExceptionHandler(UserAlreadyExistsException::class)
+    fun handleUserAlreadyExistsException(exception: UserAlreadyExistsException): ResponseEntity<Any?>? {
+        return ResponseEntity(generateExceptionBody(exception), HttpStatus.CONFLICT)
     }
 
     @ExceptionHandler(UserDoesNotExistException::class)
