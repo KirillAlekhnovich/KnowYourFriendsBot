@@ -9,11 +9,13 @@ import com.backend.kyf.utils.CorrectnessChecker.isCorrect
 import com.backend.kyf.utils.mapper.FriendMapper
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
+import org.springframework.context.annotation.Lazy
 
 @Service
 class FriendService(
     private val friendRepository: FriendRepository,
-    private val friendMapper: FriendMapper
+    private val friendMapper: FriendMapper,
+    @Lazy private val userService: UserService
 ) {
 
     fun createFriend(friendDTO: FriendDTO): FriendDTO {
@@ -39,7 +41,19 @@ class FriendService(
     }
 
     fun deleteFriend(userId: Long, friendId: Long) {
+        val friend = friendRepository.findByIdOrNull(friendId) ?: throw FriendDoesNotExistException()
+        if (friend.ownerId != userId) throw AccessDeniedException()
         friendRepository.deleteById(friendId)
+    }
+
+    fun changeFriendsName(userId: Long, friendId: Long, newName: String): FriendDTO {
+        val user = userService.getUserById(userId)
+        val modifiedFriend = getFriendById(userId, friendId)
+        if (!newName.isCorrect()) throw InvalidFriendNameException()
+        if (user.friends.any { it.name == newName }) throw FriendAlreadyExistsException()
+        modifiedFriend.name = newName
+        friendRepository.save(modifiedFriend)
+        return friendMapper.toDTO(modifiedFriend)
     }
 
     fun addAttribute(userId: Long, friendId: Long, attributeDTO: AttributeDTO): FriendDTO {

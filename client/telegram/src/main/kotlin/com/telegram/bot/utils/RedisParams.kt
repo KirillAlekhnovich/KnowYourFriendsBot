@@ -6,6 +6,7 @@ enum class RedisParams {
     STATE,
     COMMANDS_QUEUE,
     FRIEND_ID,
+    FRIEND_NAME,
     ATTRIBUTE_NAME,
     CALLBACK_MESSAGE_ID,
     CURRENT_PAGE,

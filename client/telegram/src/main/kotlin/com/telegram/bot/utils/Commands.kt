@@ -6,6 +6,7 @@ object Commands {
     const val RESET = "/reset"
     const val LIST_FRIENDS = "/list_friends"
     const val FRIEND_INFO = "/friend_info"
+    const val CHANGE_FRIENDS_NAME = "/change_friends_name"
     const val ADD_FRIEND = "/add_friend"
     const val REMOVE_FRIEND = "/remove_friend"
     const val ADD_FRIENDS_ATTRIBUTE = "/add_friends_attribute"

@@ -85,6 +85,7 @@ class FriendInfoCommand(
         buttons.add(createRowInstance(row))
         row.clear()
 
+        row.add(createInlineButton("Change name", Commands.CHANGE_FRIENDS_NAME + Commands.STORAGE))
         row.add(createInlineButton("Back to list", Commands.LIST_FRIENDS))
         buttons.add(createRowInstance(row))
 

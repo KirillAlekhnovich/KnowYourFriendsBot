@@ -39,6 +39,11 @@ class FriendController(
         return ResponseEntity.ok(generateResponseJson("Friend with id $friendId has been deleted", friendService.deleteFriend(authService.getAuthorizedUserId(), friendId)))
     }
 
+    @PutMapping("/{friendId}/change_name")
+    fun changeFriendsName(@PathVariable friendId: Long, @RequestBody newName: String): ResponseEntity<Any> {
+        return ResponseEntity.ok(generateResponseJson("Friend's name has been changed to $newName", friendService.changeFriendsName(authService.getAuthorizedUserId(), friendId, newName)))
+    }
+
     @PutMapping("/{friendId}/add_attribute")
     fun addAttribute(@PathVariable friendId: Long, @RequestBody attributeDTO: AttributeDTO): ResponseEntity<Any> {
         return ResponseEntity.ok(generateResponseJson("Attribute added", friendService.addAttribute(authService.getAuthorizedUserId(), friendId, attributeDTO)))
