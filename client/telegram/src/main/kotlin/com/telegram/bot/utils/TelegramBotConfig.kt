@@ -7,14 +7,12 @@ import com.telegram.bot.service.UserRequestService
 import com.telegram.bot.utils.Jedis.exists
 import com.telegram.bot.utils.Jedis.getValue
 import com.telegram.bot.utils.Jedis.setValue
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.telegram.telegrambots.bots.TelegramLongPollingBot
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText
 import org.telegram.telegrambots.meta.api.objects.Update
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
-import java.util.*
 
 @Service
 class TelegramBotConfig(
@@ -22,38 +20,29 @@ class TelegramBotConfig(
     private val commandHandler: CommandHandler
 ) : TelegramLongPollingBot() {
 
-    @Value("\${telegram.bot.token}")
-    private lateinit var botToken: String
+    override fun getBotToken(): String = System.getenv("BotTgToken")
 
-    @Value("\${telegram.bot.name}")
-    private lateinit var botUsername: String
-
-    override fun getBotToken(): String = botToken
-
-    override fun getBotUsername(): String = botUsername
+    override fun getBotUsername(): String = System.getenv("BotName")
 
     override fun onUpdateReceived(update: Update) {
-        val (chatId, message, messageId) = getMessage(update)
+        val (chatId, message, messageId) = getMessageData(update)
         val user = getUser(chatId)
         redisInitialSetup(chatId, messageId)
         sendResponse(user, message)
-        if (exists(chatId, RedisParams.STATE.name)) {
-            val command = getValue(chatId, RedisParams.COMMAND.name)!!
-            setValue(chatId, RedisParams.STATE.name, CommandsMap.get(command).nextState(chatId).name)
-        }
+        switchState(chatId)
     }
 
-    private fun getMessage(update: Update): Triple<Long, String, String> {
+    private fun getMessageData(update: Update): Triple<Long, String, String> {
         val chatId: Long
         val message: String
         val messageId: String
         if (update.hasCallbackQuery()) {
-            message = update.callbackQuery.data
             chatId = update.callbackQuery.from.id
+            message = update.callbackQuery.data
             messageId = update.callbackQuery.message.messageId.toString()
         } else if (update.hasMessage()) {
-            message = update.message.text
             chatId = update.message.chatId
+            message = update.message.text
             messageId = update.message.messageId.toString()
         } else throw RuntimeException("No message received")
         return Triple(chatId, message, messageId)
@@ -94,6 +83,13 @@ class TelegramBotConfig(
                     execute(editMessage)
                 }
             }
+        }
+    }
+
+    private fun switchState(chatId: Long) {
+        if (exists(chatId, RedisParams.STATE.name)) {
+            val command = getValue(chatId, RedisParams.COMMAND.name)!!
+            setValue(chatId, RedisParams.STATE.name, CommandsMap.get(command).nextState(chatId).name)
         }
     }
 }

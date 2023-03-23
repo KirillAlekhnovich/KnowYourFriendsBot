@@ -4,7 +4,6 @@ import redis.clients.jedis.Jedis
 import java.net.URI
 
 object Jedis {
-
     private val jedis = Jedis(URI(System.getenv("RedisURL")))
 
     fun setValue(userId: Long, key: String, value: String) {

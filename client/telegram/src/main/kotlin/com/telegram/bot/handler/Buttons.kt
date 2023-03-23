@@ -2,7 +2,6 @@ package com.telegram.bot.handler
 
 import com.telegram.bot.service.FriendRequestService
 import com.telegram.bot.utils.Commands
-import com.telegram.bot.utils.Jedis
 import com.telegram.bot.utils.Jedis.getValue
 import com.telegram.bot.utils.RedisParams
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup

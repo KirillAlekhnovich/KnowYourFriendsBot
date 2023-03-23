@@ -5,9 +5,9 @@ import com.telegram.bot.handler.BotState
 import com.telegram.bot.service.UserRequestService
 import com.telegram.bot.utils.Commands
 import com.telegram.bot.utils.CommandsMap
-import com.telegram.bot.utils.Jedis
 import com.telegram.bot.utils.Jedis.addToCommandsQueue
 import com.telegram.bot.utils.Jedis.getValue
+import com.telegram.bot.utils.Jedis.setValue
 import com.telegram.bot.utils.RedisParams
 import org.springframework.stereotype.Component
 import javax.inject.Named
@@ -35,8 +35,13 @@ class RemoveGeneralAttributeCommand(
         return when (botState) {
             BotState.EXPECTING_COMMAND -> "What attribute would you like to remove?"
             BotState.EXPECTING_ATTRIBUTE_NAME -> {
-                addToCommandsQueue(user.id, Commands.LIST_FRIENDS)
-                userRequestService.removeGeneralAttribute(user.id, message)
+                try {
+                    addToCommandsQueue(user.id, Commands.LIST_FRIENDS)
+                    userRequestService.removeGeneralAttribute(user.id, message)
+                } catch (e: RuntimeException) {
+                    setValue(user.id, RedisParams.STATE.name, BotState.ERROR.name)
+                    e.message!!
+                }
             }
             else -> CommandsMap.get(Commands.UNKNOWN).getMessage(user, message)
         }

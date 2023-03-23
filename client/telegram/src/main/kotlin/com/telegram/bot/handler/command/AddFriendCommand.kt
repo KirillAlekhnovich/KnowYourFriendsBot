@@ -3,12 +3,12 @@ package com.telegram.bot.handler.command
 import com.telegram.bot.dto.FriendDTO
 import com.telegram.bot.dto.UserDTO
 import com.telegram.bot.handler.BotState
-import com.telegram.bot.service.UserRequestService
+import com.telegram.bot.service.FriendRequestService
 import com.telegram.bot.utils.Commands
 import com.telegram.bot.utils.CommandsMap
-import com.telegram.bot.utils.Jedis
 import com.telegram.bot.utils.Jedis.addToCommandsQueue
 import com.telegram.bot.utils.Jedis.getValue
+import com.telegram.bot.utils.Jedis.setValue
 import com.telegram.bot.utils.RedisParams
 import org.springframework.stereotype.Component
 import javax.inject.Named
@@ -16,7 +16,7 @@ import javax.inject.Named
 @Component
 @Named(Commands.ADD_FRIEND)
 class AddFriendCommand(
-    private val userRequestService: UserRequestService
+    private val friendRequestService: FriendRequestService
 ) : Command {
     override fun description(): String {
         return "Adds new friend"
@@ -36,8 +36,16 @@ class AddFriendCommand(
         return when (botState) {
             BotState.EXPECTING_COMMAND -> "Please enter the name of the friend"
             BotState.EXPECTING_FRIEND_NAME -> {
-                addToCommandsQueue(user.id, Commands.LIST_FRIENDS)
-                userRequestService.addFriend(user.id, FriendDTO(0, message, user.id, emptyMap<String, String?>().toMutableMap()))
+                try {
+                    addToCommandsQueue(user.id, Commands.LIST_FRIENDS)
+                    friendRequestService.addFriend(
+                        user.id,
+                        FriendDTO(0, message, user.id, emptyMap<String, String?>().toMutableMap())
+                    )
+                } catch (e: RuntimeException) {
+                    setValue(user.id, RedisParams.STATE.name, BotState.ERROR.name)
+                    e.message!!
+                }
             }
             else -> CommandsMap.get(Commands.UNKNOWN).getMessage(user, message)
         }

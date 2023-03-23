@@ -17,10 +17,8 @@ class TokenAuthenticationFilter(
         val token = request.getHeader("Authorization")?.removePrefix("Bearer ") ?: ""
         if (token.isNotBlank()) {
             val userId = authService.authorizeUser(token)
-            if (userId != null) {
-                val authentication = UsernamePasswordAuthenticationToken(userId, null, listOf())
-                SecurityContextHolder.getContext().authentication = authentication
-            }
+            val authentication = UsernamePasswordAuthenticationToken(userId, null, listOf())
+            SecurityContextHolder.getContext().authentication = authentication
         }
         filterChain.doFilter(request, response)
     }

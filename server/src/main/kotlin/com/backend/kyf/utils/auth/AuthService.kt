@@ -1,5 +1,7 @@
 package com.backend.kyf.utils.auth
 
+import com.backend.kyf.exception.AccessDeniedException
+import com.backend.kyf.utils.RedisParams
 import com.backend.kyf.utils.auth.Jedis.getValue
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
@@ -13,11 +15,11 @@ class AuthService {
         return SecurityContextHolder.getContext().authentication.principal as Long
     }
 
-    fun authorizeUser(receivedAccessToken: String): Long? {
+    fun authorizeUser(receivedAccessToken: String): Long {
         val decryptedToken = tokenEncryptor.decrypt(receivedAccessToken)
         val userId = decryptedToken.split(":")[0].toLongOrNull()
-        val accessToken = userId?.let { getValue(userId, "accessToken") }
-        return if (receivedAccessToken == accessToken) userId else null
+        val accessToken = userId?.let { getValue(userId, RedisParams.ACCESS_TOKEN.name) }
+        return if (receivedAccessToken == accessToken) userId else throw AccessDeniedException()
     }
 
     fun generateAccessToken(userId: Long): String {

@@ -26,7 +26,7 @@ object Jedis {
     fun reset(userId: Long) {
         val keys = jedis.keys("user:$userId:*")
         keys.forEach {
-            if (it != "user:$userId:${RedisParams.ACCESS_TOKEN}") {
+            if (it != "user:$userId:${RedisParams.ACCESS_TOKEN}" && it != "user:$userId:${RedisParams.COMMANDS_QUEUE}") {
                 jedis.del(it)
             }
         }
@@ -54,10 +54,6 @@ object Jedis {
 
     fun getCurrentPage(userId: Long): Int {
         return jedis.get(constructField(userId, RedisParams.CURRENT_PAGE.name))?.toInt() ?: 1
-    }
-
-    fun setCurrentPage(userId: Long, page: Int) {
-        jedis.set(constructField(userId, RedisParams.CURRENT_PAGE.name), page.toString())
     }
 
     fun incrementCurrentPage(userId: Long, incrValue: Long) {

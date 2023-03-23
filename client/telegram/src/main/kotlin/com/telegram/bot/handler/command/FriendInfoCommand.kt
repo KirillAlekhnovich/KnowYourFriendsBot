@@ -6,10 +6,8 @@ import com.telegram.bot.handler.Buttons.createInlineButton
 import com.telegram.bot.handler.Buttons.createInlineMarkup
 import com.telegram.bot.handler.Buttons.createRowInstance
 import com.telegram.bot.service.FriendRequestService
-import com.telegram.bot.service.UserRequestService
 import com.telegram.bot.utils.Commands
 import com.telegram.bot.utils.CommandsMap
-import com.telegram.bot.utils.Jedis
 import com.telegram.bot.utils.Jedis.addToCommandsQueue
 import com.telegram.bot.utils.Jedis.exists
 import com.telegram.bot.utils.Jedis.getValue
@@ -24,8 +22,7 @@ import javax.inject.Named
 @Component
 @Named(Commands.FRIEND_INFO)
 class FriendInfoCommand(
-    private val friendRequestService: FriendRequestService,
-    private val userRequestService: UserRequestService
+    private val friendRequestService: FriendRequestService
 ) : Command {
     override fun description(): String {
         return "Shows info about specific friend"
@@ -35,8 +32,7 @@ class FriendInfoCommand(
         val botState = enumValueOf<BotState>(getValue(userId, RedisParams.STATE.name)!!)
         return when (botState) {
             BotState.EXPECTING_COMMAND -> BotState.EXPECTING_FRIEND_NAME
-            BotState.EXPECTING_FRIEND_NAME -> BotState.EXPECTING_COMMAND
-            BotState.EXECUTE_USING_STORAGE -> BotState.EXPECTING_COMMAND
+            BotState.EXPECTING_FRIEND_NAME, BotState.EXECUTE_USING_STORAGE -> BotState.EXPECTING_COMMAND
             else -> BotState.EXPECTING_COMMAND
         }
     }
@@ -47,7 +43,7 @@ class FriendInfoCommand(
             BotState.EXPECTING_COMMAND -> "Please enter the name of the friend"
             BotState.EXPECTING_FRIEND_NAME -> {
                 try {
-                    val friend = userRequestService.getFriendByName(user.id, message)
+                    val friend = friendRequestService.getFriendByName(user.id, message)
                     setValue(user.id, RedisParams.FRIEND_ID.name, friend.id.toString())
                     printFriendInfo(user.id, friend.id)
                 } catch (e: RuntimeException) {
@@ -96,9 +92,7 @@ class FriendInfoCommand(
         val friend = friendRequestService.getFriend(userId, friendId)
         val attributes = friendRequestService.getAttributes(userId, friendId)
         val stringBuilder = StringBuilder()
-        for ((name, value) in attributes) {
-            stringBuilder.append("$name: $value\n")
-        }
+        attributes.forEach { stringBuilder.append("${it.name}: ${it.value}\n") }
         if (stringBuilder.isEmpty()) stringBuilder.append("Friend has no attributes")
         return "Info about ${friend.name}:\n\n${stringBuilder}"
     }

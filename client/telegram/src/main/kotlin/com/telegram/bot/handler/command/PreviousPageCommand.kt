@@ -4,7 +4,6 @@ import com.telegram.bot.dto.*
 import com.telegram.bot.handler.BotState
 import com.telegram.bot.utils.Commands
 import com.telegram.bot.utils.CommandsMap
-import com.telegram.bot.utils.Jedis
 import com.telegram.bot.utils.Jedis.incrementCurrentPage
 import com.telegram.bot.utils.MessageType
 import org.springframework.stereotype.Component

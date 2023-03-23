@@ -5,9 +5,8 @@ import com.telegram.bot.handler.BotState
 import com.telegram.bot.handler.Buttons.createInlineButton
 import com.telegram.bot.handler.Buttons.createInlineMarkup
 import com.telegram.bot.handler.Buttons.createRowInstance
-import com.telegram.bot.service.UserRequestService
+import com.telegram.bot.service.FriendRequestService
 import com.telegram.bot.utils.Commands
-import com.telegram.bot.utils.Jedis
 import com.telegram.bot.utils.Jedis.deleteValue
 import com.telegram.bot.utils.Jedis.getCurrentPage
 import com.telegram.bot.utils.Jedis.setValue
@@ -24,7 +23,7 @@ import javax.inject.Named
 @Component
 @Named(Commands.LIST_FRIENDS)
 class ListFriendsCommand(
-    private val userRequestService: UserRequestService
+    private val friendRequestService: FriendRequestService
 ) : Command {
     override fun description(): String {
         return "Shows a list of your friends"
@@ -36,14 +35,19 @@ class ListFriendsCommand(
 
     override fun execute(user: UserDTO, message: String): ClientResponseDTO {
         setValue(user.id, RedisParams.CURRENT_PAGE.name, "1")
+        deleteValue(user.id, RedisParams.FRIEND_ID.name)
         return ClientResponseDTO(getMessage(user, message), getButtons(user.id))
     }
 
     override fun getMessage(user: UserDTO, message: String): String {
-        deleteValue(user.id, RedisParams.FRIEND_ID.name)
-        val friends = userRequestService.getFriendNames(user.id)
-        return if (friends.isEmpty())  "You have no friends :("
-        else generateFriendsList(user.id, friends)
+        return try {
+            val friends = friendRequestService.getFriendNames(user.id)
+            if (friends.isEmpty()) "You have no friends :("
+            else generateFriendsList(user.id, friends)
+        } catch (e: RuntimeException) {
+            setValue(user.id, RedisParams.STATE.name, BotState.ERROR.name)
+            e.message!!
+        }
     }
 
     override fun getButtons(userId: Long): ReplyKeyboard? {
@@ -54,7 +58,7 @@ class ListFriendsCommand(
         if (currentPage > 1) {
             row.add(createInlineButton("Previous page", Commands.PREVIOUS_PAGE))
         }
-        if (userRequestService.getFriendNames(userId).size > Paging.ITEMS_PER_PAGE * currentPage) {
+        if (friendRequestService.getFriendNames(userId).size > Paging.ITEMS_PER_PAGE * currentPage) {
             row.add(createInlineButton("Next page", Commands.NEXT_PAGE))
         }
         buttons.add(createRowInstance(row))

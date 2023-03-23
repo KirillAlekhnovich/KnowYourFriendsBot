@@ -1,7 +1,5 @@
 package com.backend.kyf.service
 
-import com.backend.kyf.dto.AttributeDTO
-import com.backend.kyf.dto.FriendDTO
 import com.backend.kyf.dto.UserDTO
 import com.backend.kyf.entity.Friend
 import com.backend.kyf.entity.User
@@ -9,28 +7,27 @@ import com.backend.kyf.exception.*
 import com.backend.kyf.repository.FriendRepository
 import com.backend.kyf.repository.UserRepository
 import com.backend.kyf.utils.auth.AuthService
-import com.backend.kyf.utils.CorrectnessChecker.isCorrect
-import com.backend.kyf.utils.auth.Jedis
+import com.backend.kyf.utils.CorrectnessChecker.nameIsCorrect
+import com.backend.kyf.utils.RedisParams
 import com.backend.kyf.utils.auth.Jedis.setValue
-import com.backend.kyf.utils.mapper.FriendMapper
 import com.backend.kyf.utils.mapper.UserMapper
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
+import org.springframework.context.annotation.Lazy
 
 @Service
 class UserService(
-    private val userRepository: UserRepository,
     private val userMapper: UserMapper,
-    private val friendMapper: FriendMapper,
-    private val friendService: FriendService,
+    private val userRepository: UserRepository,
     private val friendRepository: FriendRepository,
-    private val authService: AuthService
+    private val authService: AuthService,
+    @Lazy private val friendService: FriendService
 ) {
 
     fun registerUser(userId: Long): UserDTO {
         if (exists(userId)) throw UserAlreadyExistsException()
         val user = User(userId, emptySet<Friend>().toMutableSet(), emptySet<String>().toMutableSet())
-        setValue(userId, "accessToken", authService.generateAccessToken(userId))
+        setValue(userId, RedisParams.ACCESS_TOKEN.name, authService.generateAccessToken(userId))
         userRepository.save(user)
         return userMapper.toDTO(user)
     }
@@ -57,47 +54,9 @@ class UserService(
         userRepository.save(user)
     }
 
-    fun addFriend(userId: Long, friendDTO: FriendDTO): UserDTO {
-        val user = getUserById(userId)
-        if (!friendDTO.name.isCorrect()) throw InvalidFriendNameException()
-        if (user.friends.any { it.name == friendDTO.name }) throw FriendAlreadyExistsException()
-
-        val friend = friendMapper.toEntity(friendService.createFriend(friendDTO))
-        user.generalAttributes.forEach {
-            friendService.addAttribute(userId, friend.id, AttributeDTO(it, "Not set"))
-        }
-        user.friends.add(friend)
-        userRepository.save(user)
-        return userMapper.toDTO(user)
-    }
-
-    fun getFriendByName(userId: Long, friendName: String): FriendDTO {
-        val user = getUserById(userId)
-        val friend = user.friends.find { it.name == friendName } ?: throw FriendDoesNotExistException()
-        return friendMapper.toDTO(friend)
-    }
-
-    fun getFriendNames(userId: Long): List<String> {
-        val user = getUserById(userId)
-        return user.friends.map { it.name }.sorted()
-    }
-
-    fun getAllFriends(userId: Long): List<FriendDTO> {
-        val user = getUserById(userId)
-        return user.friends.map { friendMapper.toDTO(it) }.sortedBy { it.name }
-    }
-
-    fun removeFriend(userId: Long, friendId: Long): UserDTO {
-        val user = getUserById(userId)
-        val friend = friendService.getFriendById(userId, friendId)
-        friendService.deleteFriend(userId, friendId)
-        user.friends.remove(friend)
-        return userMapper.toDTO(user)
-    }
-
     fun addGeneralAttribute(userId: Long, attributeName: String) {
         val user = getUserById(userId)
-        if (!attributeName.isCorrect()) throw InvalidAttributeNameException()
+        if (!attributeName.nameIsCorrect()) throw InvalidAttributeNameException()
         if (hasGeneralAttribute(userId, attributeName)) throw AttributeAlreadyExistsException()
         user.friends.forEach {
             if (!it.attributes.containsKey(attributeName)) {

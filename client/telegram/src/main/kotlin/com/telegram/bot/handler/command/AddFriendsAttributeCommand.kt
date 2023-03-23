@@ -3,10 +3,8 @@ package com.telegram.bot.handler.command
 import com.telegram.bot.dto.*
 import com.telegram.bot.handler.BotState
 import com.telegram.bot.service.FriendRequestService
-import com.telegram.bot.service.UserRequestService
 import com.telegram.bot.utils.Commands
 import com.telegram.bot.utils.CommandsMap
-import com.telegram.bot.utils.Jedis
 import com.telegram.bot.utils.Jedis.addToCommandsQueue
 import com.telegram.bot.utils.Jedis.getValue
 import com.telegram.bot.utils.Jedis.setValue
@@ -17,8 +15,7 @@ import javax.inject.Named
 @Component
 @Named(Commands.ADD_FRIENDS_ATTRIBUTE)
 class AddFriendsAttributeCommand(
-    private val friendRequestService: FriendRequestService,
-    private val userRequestService: UserRequestService
+    private val friendRequestService: FriendRequestService
 ) : Command {
     override fun description(): String {
         return "Adds new attribute to a friend"
@@ -41,7 +38,7 @@ class AddFriendsAttributeCommand(
             BotState.EXPECTING_COMMAND -> "Please specify friend's name"
             BotState.EXPECTING_FRIEND_NAME -> {
                 try {
-                    val friend = userRequestService.getFriendByName(user.id, message)
+                    val friend = friendRequestService.getFriendByName(user.id, message)
                     setValue(user.id, RedisParams.FRIEND_ID.name, friend.id.toString())
                     "What attribute would you like to add?"
                 } catch (e: RuntimeException) {

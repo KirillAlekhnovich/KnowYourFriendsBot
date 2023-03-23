@@ -4,10 +4,8 @@ import com.telegram.bot.dto.*
 import com.telegram.bot.handler.BotState
 import com.telegram.bot.handler.Buttons
 import com.telegram.bot.service.FriendRequestService
-import com.telegram.bot.service.UserRequestService
 import com.telegram.bot.utils.Commands
 import com.telegram.bot.utils.CommandsMap
-import com.telegram.bot.utils.Jedis
 import com.telegram.bot.utils.Jedis.addToCommandsQueue
 import com.telegram.bot.utils.Jedis.getValue
 import com.telegram.bot.utils.Jedis.setValue
@@ -19,8 +17,7 @@ import javax.inject.Named
 @Component
 @Named(Commands.REMOVE_FRIENDS_ATTRIBUTE)
 class RemoveFriendsAttributeCommand(
-    private val friendRequestService: FriendRequestService,
-    private val userRequestService: UserRequestService
+    private val friendRequestService: FriendRequestService
 ) : Command {
     override fun description(): String {
         return "Removes friend's existing attribute"
@@ -42,7 +39,7 @@ class RemoveFriendsAttributeCommand(
             BotState.EXPECTING_COMMAND -> "Which friend would you like to remove attribute from?"
             BotState.EXPECTING_FRIEND_NAME -> {
                 return try {
-                    val friend = userRequestService.getFriendByName(user.id, message)
+                    val friend = friendRequestService.getFriendByName(user.id, message)
                     setValue(user.id, RedisParams.FRIEND_ID.name, friend.id.toString())
                     "What attribute would you like to remove?"
                 } catch (e: RuntimeException) {

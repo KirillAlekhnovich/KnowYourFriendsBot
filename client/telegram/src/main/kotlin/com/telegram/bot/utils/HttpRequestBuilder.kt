@@ -28,8 +28,7 @@ class HttpRequestBuilder {
     }
 
     fun <T> get(url: String, obj: T, accessToken: String? = null): ResponseDTO {
-        val json = if (obj is String) obj
-        else klaxon.toJsonString(obj)
+        val json = if (obj is String) obj else klaxon.toJsonString(obj)
         return getResponse(url.httpGet()
             .body(json)
             .header("Content-Type" to "application/json")
@@ -44,8 +43,7 @@ class HttpRequestBuilder {
     }
 
     fun <T> post(url: String, obj: T, accessToken: String? = null): ResponseDTO {
-        val json = if (obj is String) obj
-        else klaxon.toJsonString(obj)
+        val json = if (obj is String) obj else klaxon.toJsonString(obj)
         return getResponse(url.httpPost()
             .body(json)
             .header("Content-Type" to "application/json")
@@ -60,8 +58,7 @@ class HttpRequestBuilder {
     }
 
     fun <T> put(url: String, obj: T, accessToken: String? = null): ResponseDTO {
-        val json = if (obj is String) obj
-        else klaxon.toJsonString(obj)
+        val json = if (obj is String) obj else klaxon.toJsonString(obj)
         return getResponse(url.httpPut()
             .body(json)
             .header("Content-Type" to "application/json")
@@ -76,8 +73,7 @@ class HttpRequestBuilder {
     }
 
     fun <T> delete(url: String, obj: T, accessToken: String? = null): ResponseDTO {
-        val json = if (obj is String) obj
-        else klaxon.toJsonString(obj)
+        val json = if (obj is String) obj else klaxon.toJsonString(obj)
         return getResponse(url.httpDelete()
             .body(json)
             .header("Content-Type" to "application/json")

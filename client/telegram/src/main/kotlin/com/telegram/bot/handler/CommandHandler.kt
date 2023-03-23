@@ -5,7 +5,6 @@ import com.telegram.bot.dto.UserDTO
 import com.telegram.bot.handler.command.Command
 import com.telegram.bot.utils.Commands
 import com.telegram.bot.utils.CommandsMap
-import com.telegram.bot.utils.Jedis
 import com.telegram.bot.utils.Jedis.addToCommandsQueue
 import com.telegram.bot.utils.Jedis.getCommandsQueue
 import com.telegram.bot.utils.Jedis.getValue

@@ -17,7 +17,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
-    class WebSecurityConfig(
+class WebSecurityConfig(
     private val userDetailsService: UserDetailsService,
     private val tokenAuthenticationFilter: TokenAuthenticationFilter
 ) : WebSecurityConfigurerAdapter() {

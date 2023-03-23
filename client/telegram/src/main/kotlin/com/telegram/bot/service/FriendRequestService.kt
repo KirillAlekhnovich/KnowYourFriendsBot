@@ -14,6 +14,26 @@ class FriendRequestService(
     @Value("\${backend.url}/friends")
     private lateinit var friendsEndpoint: String
 
+    fun getFriendNames(userId: Long): List<String> {
+        val url = "$friendsEndpoint/names"
+        return httpRequestBuilder.get(url, getAccessToken(userId)).getListFromData()
+    }
+
+    fun getFriendByName(userId: Long, friendName: String): FriendDTO {
+        val url = "$friendsEndpoint/search/$friendName"
+        return httpRequestBuilder.get(url, getAccessToken(userId)).getObjectFromData()
+    }
+
+    fun addFriend(userId: Long, friendDTO: FriendDTO): String {
+        val url = "$friendsEndpoint/add"
+        return httpRequestBuilder.post(url, friendDTO, getAccessToken(userId)).getMessage()
+    }
+
+    fun removeFriend(userId: Long, friendId: Long): String {
+        val url = "$friendsEndpoint/$friendId/remove"
+        return httpRequestBuilder.delete(url, getAccessToken(userId)).getMessage()
+    }
+
     fun getFriend(userId: Long, friendId: Long): FriendDTO {
         val url = "$friendsEndpoint/$friendId"
         return httpRequestBuilder.get(url, getAccessToken(userId)).getObjectFromData()
