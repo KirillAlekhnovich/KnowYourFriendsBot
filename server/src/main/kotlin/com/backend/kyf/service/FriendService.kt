@@ -75,18 +75,11 @@ class FriendService(
         return friendMapper.toDTO(modifiedFriend)
     }
 
-    fun removeFriend(userId: Long, friendId: Long): FriendDTO {
+    fun removeFriend(userId: Long, friendId: Long) {
         val user = userService.getUserById(userId)
         val friend = getFriendById(userId, friendId)
-        deleteFriend(userId, friendId)
-        user.friends.remove(friend)
-        return friendMapper.toDTO(friend)
-    }
-
-    fun deleteFriend(userId: Long, friendId: Long) {
-        val friend = friendRepository.findByIdOrNull(friendId) ?: throw FriendDoesNotExistException()
-        if (friend.ownerId != userId) throw AccessDeniedException()
         friendRepository.deleteById(friendId)
+        user.friends.remove(friend)
     }
 
     fun addAttribute(userId: Long, friendId: Long, attributeDTO: AttributeDTO): FriendDTO {
@@ -125,7 +118,7 @@ class FriendService(
         return friendMapper.toDTO(friend)
     }
 
-    fun deleteAttribute(userId: Long, friendId: Long, attributeName: String): FriendDTO {
+    fun removeAttribute(userId: Long, friendId: Long, attributeName: String): FriendDTO {
         val friend = getFriendById(userId, friendId)
         if (!hasAttribute(userId, friendId, attributeName)) throw AttributeDoesNotExistException()
         friend.attributes.remove(attributeName)

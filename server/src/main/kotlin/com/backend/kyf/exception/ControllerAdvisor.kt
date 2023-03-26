@@ -13,9 +13,7 @@ class ControllerAdvisor: ResponseEntityExceptionHandler() {
 
     private fun generateExceptionBody(exception: Exception): Map<String, Any?> {
         val body: MutableMap<String, Any?> = LinkedHashMap()
-        body["timestamp"] = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss"))
         body["message"] = exception.message
-        body["data"] = exception.stackTraceToString()
         return body
     }
 

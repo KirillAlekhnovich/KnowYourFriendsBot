@@ -22,7 +22,9 @@ class UserController(
             return ResponseEntity.badRequest().body("IP address is not allowed to connect to this server")
         }
         userService.registerUser(userId)
-        return ResponseEntity.ok(buildResponse("User created", getValue(userId, RedisParams.ACCESS_TOKEN.name)!!))
+        val accessToken = getValue(userId, RedisParams.ACCESS_TOKEN.name)
+        return if (accessToken == null) ResponseEntity.badRequest().body("Failed to create user")
+        else ResponseEntity.ok(buildResponse("User created", accessToken))
     }
 
     @GetMapping("/{userId}")

@@ -146,11 +146,11 @@ class FriendController(
     }
 
     @DeleteMapping("/{friendId}/delete_attribute")
-    fun deleteAttribute(@PathVariable friendId: Long, @RequestBody attributeName: String): ResponseEntity<Any> {
+    fun removeAttribute(@PathVariable friendId: Long, @RequestBody attributeName: String): ResponseEntity<Any> {
         return ResponseEntity.ok(
             buildResponse(
                 "Attribute deleted",
-                friendService.deleteAttribute(authService.getAuthorizedUserId(), friendId, attributeName)
+                friendService.removeAttribute(authService.getAuthorizedUserId(), friendId, attributeName)
             )
         )
     }

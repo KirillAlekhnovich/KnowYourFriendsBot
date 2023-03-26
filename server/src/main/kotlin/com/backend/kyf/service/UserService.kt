@@ -47,7 +47,7 @@ class UserService(
     fun reset(userId: Long) {
         val user = getUserById(userId)
         user.friends.forEach {
-            friendService.deleteFriend(userId, it.id)
+            friendService.removeFriend(userId, it.id)
         }
         user.friends.clear()
         user.generalAttributes.clear()
