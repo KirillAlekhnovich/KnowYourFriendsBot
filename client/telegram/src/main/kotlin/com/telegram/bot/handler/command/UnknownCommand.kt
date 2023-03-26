@@ -6,6 +6,9 @@ import com.telegram.bot.utils.Commands
 import org.springframework.stereotype.Component
 import javax.inject.Named
 
+/**
+ * Class that handles unknown command.
+ */
 @Component
 @Named(Commands.UNKNOWN)
 class UnknownCommand : Command {

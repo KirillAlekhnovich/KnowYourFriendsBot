@@ -2,6 +2,9 @@ package libs
 
 import org.gradle.api.artifacts.dsl.DependencyHandler
 
+/**
+ * A lightweight in-memory database used for testing.
+ */
 object H2 {
 
     private const val h2Version = "2.1.214"

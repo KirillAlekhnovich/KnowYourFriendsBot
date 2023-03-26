@@ -13,6 +13,9 @@ import com.telegram.bot.utils.RedisParams
 import org.springframework.stereotype.Component
 import javax.inject.Named
 
+/**
+ * Class that handles add friend command.
+ */
 @Component
 @Named(Commands.ADD_FRIEND)
 class AddFriendCommand(

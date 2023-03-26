@@ -2,6 +2,9 @@ package libs
 
 import org.gradle.api.artifacts.dsl.DependencyHandler
 
+/**
+ * PostgreSQL database driver.
+ */
 object Postgresql {
 
     private val dependencies = listOf(

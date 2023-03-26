@@ -12,6 +12,9 @@ import com.telegram.bot.utils.RedisParams
 import org.springframework.stereotype.Component
 import javax.inject.Named
 
+/**
+ * Class that handles remove friend command.
+ */
 @Component
 @Named(Commands.REMOVE_FRIEND)
 class RemoveFriendCommand(

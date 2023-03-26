@@ -1,5 +1,8 @@
 package com.telegram.bot.utils
 
+/**
+ * Commands that can be used in telegram bot
+ */
 object Commands {
     const val START = "/start"
     const val HELP = "/help"

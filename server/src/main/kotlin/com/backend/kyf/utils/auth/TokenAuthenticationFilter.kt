@@ -8,11 +8,17 @@ import javax.servlet.FilterChain
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
+/**
+ * Filter for handling authorization-related requests.
+ */
 @Component
 class TokenAuthenticationFilter(
     private val authService: AuthService
 ) : OncePerRequestFilter() {
 
+    /**
+     * Checks if the access token is valid.
+     */
     override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, filterChain: FilterChain) {
         val token = request.getHeader("Authorization")?.removePrefix("Bearer ") ?: ""
         if (token.isNotBlank()) {

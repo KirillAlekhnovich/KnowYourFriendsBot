@@ -2,6 +2,9 @@ package libs
 
 import org.gradle.api.artifacts.dsl.DependencyHandler
 
+/**
+ * A library that is used to write and run tests.
+ */
 object JUnit {
 
     private const val jUnitVersion = "5.8.1"

@@ -2,6 +2,9 @@ package libs
 
 import org.gradle.api.artifacts.dsl.DependencyHandler
 
+/**
+ * A library that provides a mocking API.
+ */
 object MockK {
     private const val mockKVersion = "1.13.4"
 

@@ -6,6 +6,9 @@ import com.telegram.bot.utils.Jedis.getAccessToken
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 
+/**
+ * Class for sending friend-related requests to the server.
+ */
 @Service
 class FriendRequestService(
     private val httpRequestBuilder: HttpRequestBuilder

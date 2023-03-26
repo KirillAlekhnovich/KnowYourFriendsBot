@@ -2,6 +2,9 @@ package libs
 
 import org.gradle.api.artifacts.dsl.DependencyHandler
 
+/**
+ * Spring framework.
+ */
 object Spring {
 
     private val dependencies = listOf(

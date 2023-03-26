@@ -12,6 +12,9 @@ import com.telegram.bot.utils.RedisParams
 import org.springframework.stereotype.Component
 import javax.inject.Named
 
+/**
+ * Class that handles remove general attribute command.
+ */
 @Component
 @Named(Commands.REMOVE_GENERAL_ATTRIBUTE)
 class RemoveGeneralAttributeCommand(

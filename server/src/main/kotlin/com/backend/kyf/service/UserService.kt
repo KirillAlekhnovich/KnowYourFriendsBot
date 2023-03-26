@@ -15,6 +15,9 @@ import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.context.annotation.Lazy
 
+/**
+ * Service for handling user-related requests.
+ */
 @Service
 class UserService(
     private val userMapper: UserMapper,
@@ -24,6 +27,9 @@ class UserService(
     @Lazy private val friendService: FriendService
 ) {
 
+    /**
+     * Registers a new user.
+     */
     fun registerUser(userId: Long): UserDTO {
         if (exists(userId)) throw UserAlreadyExistsException()
         val user = User(userId, emptySet<Friend>().toMutableSet(), emptySet<String>().toMutableSet())
@@ -32,18 +38,30 @@ class UserService(
         return userMapper.toDTO(user)
     }
 
+    /**
+     * Gets user entity by id.
+     */
     fun getUserById(userId: Long): User {
         return userRepository.findByIdOrNull(userId) ?: throw UserDoesNotExistException()
     }
 
+    /**
+     * Gets user dto by id.
+     */
     fun getUserDTOById(userId: Long): UserDTO {
         return userMapper.toDTO(getUserById(userId))
     }
 
+    /**
+     * Checks if user exists.
+     */
     fun exists(userId: Long): Boolean {
         return userRepository.existsById(userId)
     }
 
+    /**
+     * Resets user's profile. Deletes all friends and general attributes.
+     */
     fun reset(userId: Long) {
         val user = getUserById(userId)
         user.friends.forEach {
@@ -54,6 +72,9 @@ class UserService(
         userRepository.save(user)
     }
 
+    /**
+     * Adds a general attribute which will be added to all user's friends.
+     */
     fun addGeneralAttribute(userId: Long, attributeName: String) {
         val user = getUserById(userId)
         if (!attributeName.nameIsCorrect()) throw InvalidAttributeNameException()
@@ -68,11 +89,17 @@ class UserService(
         userRepository.save(user)
     }
 
+    /**
+     * Checks if user has a general attribute.
+     */
     fun hasGeneralAttribute(userId: Long, attributeName: String): Boolean {
         val user = getUserById(userId)
         return user.generalAttributes.contains(attributeName)
     }
 
+    /**
+     * Removes a general attribute from user's friends.
+     */
     fun removeGeneralAttribute(userId: Long, attributeName: String) {
         if (!hasGeneralAttribute(userId, attributeName)) throw AttributeDoesNotExistException()
         val user = getUserById(userId)

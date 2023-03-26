@@ -12,6 +12,9 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow
 import java.util.ArrayList
 
+/**
+ * Object that creates buttons for inline and keyboard markup in Telegram.
+ */
 object Buttons {
     fun createInlineButton(text: String, callback: String? = null): InlineKeyboardButton {
         val button = InlineKeyboardButton()
@@ -45,6 +48,9 @@ object Buttons {
         return markup
     }
 
+    /**
+     * Creates inline markup with friend's attributes.
+     */
     fun createAttributesMarkup(userId: Long, friendRequestService: FriendRequestService): ReplyKeyboard? {
         val botState = enumValueOf<BotState>(getValue(userId, RedisParams.STATE.name)!!)
         if (botState != BotState.EXPECTING_FRIEND_NAME && botState != BotState.EXECUTE_USING_STORAGE) return null

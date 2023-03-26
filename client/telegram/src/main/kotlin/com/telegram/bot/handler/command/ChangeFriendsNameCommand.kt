@@ -12,6 +12,9 @@ import com.telegram.bot.utils.RedisParams
 import org.springframework.stereotype.Component
 import javax.inject.Named
 
+/**
+ * Class that handles change friends name command.
+ */
 @Component
 @Named(Commands.CHANGE_FRIENDS_NAME)
 class ChangeFriendsNameCommand(

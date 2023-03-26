@@ -18,6 +18,9 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import java.util.ArrayList
 import javax.inject.Named
 
+/**
+ * Command that resets user profile.
+ */
 @Component
 @Named(Commands.RESET)
 class ResetCommand(

@@ -7,6 +7,9 @@ import com.telegram.bot.utils.CommandsMap
 import org.springframework.stereotype.Component
 import javax.inject.Named
 
+/**
+ * Class that handles help command.
+ */
 @Component
 @Named(Commands.HELP)
 class HelpCommand : Command {

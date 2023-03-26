@@ -2,6 +2,9 @@ package libs
 
 import org.gradle.api.artifacts.dsl.DependencyHandler
 
+/**
+ * A library for easily making HTTP requests.
+ */
 object Fuel {
 
     private const val fuelVersion = "2.3.1"

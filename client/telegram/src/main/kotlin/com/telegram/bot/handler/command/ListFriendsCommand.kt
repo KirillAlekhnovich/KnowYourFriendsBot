@@ -20,6 +20,9 @@ import kotlin.math.ceil
 import java.util.ArrayList
 import javax.inject.Named
 
+/**
+ * Command that shows a list of your friends.
+ */
 @Component
 @Named(Commands.LIST_FRIENDS)
 class ListFriendsCommand(

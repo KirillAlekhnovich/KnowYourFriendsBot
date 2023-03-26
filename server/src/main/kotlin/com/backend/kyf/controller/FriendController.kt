@@ -8,6 +8,9 @@ import com.backend.kyf.utils.auth.AuthService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
+/**
+ * Controller for handling friend-related requests.
+ */
 @RestController
 @RequestMapping("/friends")
 class FriendController(
@@ -15,6 +18,9 @@ class FriendController(
     private val authService: AuthService
 ) {
 
+    /**
+     * Adds a friend to the user's friend list.
+     */
     @PostMapping("/add")
     fun addFriend(@RequestBody friendDTO: FriendDTO): ResponseEntity<Any> {
         return ResponseEntity.ok(
@@ -25,6 +31,9 @@ class FriendController(
         )
     }
 
+    /**
+     * Gets friend info by id.
+     */
     @GetMapping("/{friendId}")
     fun getFriend(@PathVariable friendId: Long): ResponseEntity<Any> {
         return ResponseEntity.ok(
@@ -35,6 +44,9 @@ class FriendController(
         )
     }
 
+    /**
+     * Gets friend info by name.
+     */
     @GetMapping("/search/{friendName}")
     fun getFriendByName(@PathVariable friendName: String): ResponseEntity<Any> {
         return ResponseEntity.ok(
@@ -45,6 +57,9 @@ class FriendController(
         )
     }
 
+    /**
+     * Gets all user's friends.
+     */
     @GetMapping
     fun getAllFriends(): ResponseEntity<Any> {
         return ResponseEntity.ok(
@@ -55,6 +70,9 @@ class FriendController(
         )
     }
 
+    /**
+     * Gets all user's friends' names.
+     */
     @GetMapping("/names")
     fun getAllFriendNames(): ResponseEntity<Any> {
         return ResponseEntity.ok(
@@ -65,6 +83,9 @@ class FriendController(
         )
     }
 
+    /**
+     * Updates friend.
+     */
     @PutMapping("/{friendId}/update")
     fun updateFriend(@PathVariable friendId: Long, @RequestBody newFriendDTO: FriendDTO): ResponseEntity<Any> {
         return ResponseEntity.ok(
@@ -75,6 +96,9 @@ class FriendController(
         )
     }
 
+    /**
+     * Changes the name of a friend.
+     */
     @PutMapping("/{friendId}/change_name")
     fun changeFriendsName(@PathVariable friendId: Long, @RequestBody newName: String): ResponseEntity<Any> {
         return ResponseEntity.ok(
@@ -85,6 +109,9 @@ class FriendController(
         )
     }
 
+    /**
+     * Removes a friend from the user's friend list.
+     */
     @DeleteMapping("/{friendId}/remove")
     fun removeFriend(@PathVariable friendId: Long): ResponseEntity<Any> {
         return ResponseEntity.ok(
@@ -95,6 +122,9 @@ class FriendController(
         )
     }
 
+    /**
+     * Adds an attribute to a friend.
+     */
     @PutMapping("/{friendId}/add_attribute")
     fun addAttribute(@PathVariable friendId: Long, @RequestBody attributeDTO: AttributeDTO): ResponseEntity<Any> {
         return ResponseEntity.ok(
@@ -105,6 +135,9 @@ class FriendController(
         )
     }
 
+    /**
+     * Checks whether friend has attribute.
+     */
     @GetMapping("/{friendId}/has_attribute/{attributeName}")
     fun hasAttribute(@PathVariable friendId: Long, @PathVariable attributeName: String): ResponseEntity<Any> {
         return ResponseEntity.ok(
@@ -115,6 +148,9 @@ class FriendController(
         )
     }
 
+    /**
+     * Gets all attributes of a friend.
+     */
     @GetMapping("/{friendId}/attributes")
     fun getAttributes(@PathVariable friendId: Long): ResponseEntity<Any> {
         return ResponseEntity.ok(
@@ -125,6 +161,9 @@ class FriendController(
         )
     }
 
+    /**
+     * Gets all attribute names of a friend.
+     */
     @GetMapping("/{friendId}/attribute_names")
     fun getAttributeNames(@PathVariable friendId: Long): ResponseEntity<Any> {
         return ResponseEntity.ok(
@@ -135,6 +174,9 @@ class FriendController(
         )
     }
 
+    /**
+     * Updates friend's attribute value.
+     */
     @PutMapping("/{friendId}/update_attribute")
     fun updateAttribute(@PathVariable friendId: Long, @RequestBody attributeDTO: AttributeDTO): ResponseEntity<Any> {
         return ResponseEntity.ok(
@@ -145,6 +187,9 @@ class FriendController(
         )
     }
 
+    /**
+     * Removes an attribute from a friend.
+     */
     @DeleteMapping("/{friendId}/delete_attribute")
     fun removeAttribute(@PathVariable friendId: Long, @RequestBody attributeName: String): ResponseEntity<Any> {
         return ResponseEntity.ok(

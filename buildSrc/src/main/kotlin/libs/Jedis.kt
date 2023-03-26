@@ -2,6 +2,9 @@ package libs
 
 import org.gradle.api.artifacts.dsl.DependencyHandler
 
+/**
+ * A client library for Redis.
+ */
 object Jedis {
 
     private const val jedisVersion = "4.3.1"

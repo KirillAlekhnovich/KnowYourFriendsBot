@@ -14,6 +14,9 @@ import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard
 import javax.inject.Named
 
+/**
+ * Command that removes friend's existing attribute.
+ */
 @Component
 @Named(Commands.REMOVE_FRIENDS_ATTRIBUTE)
 class RemoveFriendsAttributeCommand(

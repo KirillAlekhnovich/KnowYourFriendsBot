@@ -2,6 +2,9 @@ package libs
 
 import org.gradle.api.artifacts.dsl.DependencyHandler
 
+/**
+ * A library that provides a simple API for mocking Spring beans.
+ */
 object SpringMockK {
 
     private const val springMockKVersion = "3.1.2"

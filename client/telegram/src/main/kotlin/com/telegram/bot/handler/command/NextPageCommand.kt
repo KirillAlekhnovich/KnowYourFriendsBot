@@ -10,6 +10,9 @@ import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard
 import javax.inject.Named
 
+/**
+ * Command that shows next page of friends list.
+ */
 @Component
 @Named(Commands.NEXT_PAGE)
 class NextPageCommand : Command {

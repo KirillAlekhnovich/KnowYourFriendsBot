@@ -1,5 +1,8 @@
 package com.telegram.bot.utils
 
+/**
+ * Enum that represents all Redis keys which are used in client.
+ */
 enum class RedisParams {
     ACCESS_TOKEN,
     COMMAND,

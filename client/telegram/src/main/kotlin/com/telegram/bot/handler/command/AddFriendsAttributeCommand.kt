@@ -12,6 +12,9 @@ import com.telegram.bot.utils.RedisParams
 import org.springframework.stereotype.Component
 import javax.inject.Named
 
+/**
+ * Class that handles add friend's attribute command.
+ */
 @Component
 @Named(Commands.ADD_FRIENDS_ATTRIBUTE)
 class AddFriendsAttributeCommand(

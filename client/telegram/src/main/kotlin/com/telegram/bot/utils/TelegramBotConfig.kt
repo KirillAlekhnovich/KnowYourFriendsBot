@@ -14,16 +14,28 @@ import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageTe
 import org.telegram.telegrambots.meta.api.objects.Update
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
 
+/**
+ * Class that represents Telegram bot configuration.
+ */
 @Service
 class TelegramBotConfig(
     private val userRequestService: UserRequestService,
     private val commandHandler: CommandHandler
 ) : TelegramLongPollingBot() {
 
+    /**
+     * Gets bot token from environmental variable.
+     */
     override fun getBotToken(): String = System.getenv("BotTgToken")
 
+    /**
+     * Gets bot username from environmental variable.
+     */
     override fun getBotUsername(): String = System.getenv("BotName")
 
+    /**
+     * Handling received update.
+     */
     override fun onUpdateReceived(update: Update) {
         val (chatId, message, messageId) = getMessageData(update)
         val user = getUser(chatId)
@@ -32,6 +44,9 @@ class TelegramBotConfig(
         switchState(chatId)
     }
 
+    /**
+     * Gets chat id, message id and message itself.
+     */
     private fun getMessageData(update: Update): Triple<Long, String, String> {
         val chatId: Long
         val message: String
@@ -48,6 +63,9 @@ class TelegramBotConfig(
         return Triple(chatId, message, messageId)
     }
 
+    /**
+     * Gets user from database or creates new one.
+     */
     private fun getUser(chatId: Long): UserDTO {
         if (!userRequestService.exists(chatId)) {
             setValue(chatId, RedisParams.ACCESS_TOKEN.name, userRequestService.registerUser(chatId))
@@ -55,6 +73,9 @@ class TelegramBotConfig(
         return userRequestService.getUser(chatId)
     }
 
+    /**
+     * Initializes Redis database. Sets default state and command.
+     */
     private fun redisInitialSetup(chatId: Long, messageId: String) {
         if (!exists(chatId, RedisParams.COMMAND.name)) {
             setValue(chatId, RedisParams.COMMAND.name, Commands.START)
@@ -65,6 +86,9 @@ class TelegramBotConfig(
         setValue(chatId, RedisParams.CALLBACK_MESSAGE_ID.name, messageId)
     }
 
+    /**
+     * Sends response to user.
+     */
     private fun sendResponse(user: UserDTO, message: String) {
         val response = commandHandler.handle(user, message)
         response.forEach {
@@ -86,6 +110,9 @@ class TelegramBotConfig(
         }
     }
 
+    /**
+     * Switches bot state to next one.
+     */
     private fun switchState(chatId: Long) {
         if (exists(chatId, RedisParams.STATE.name)) {
             val command = getValue(chatId, RedisParams.COMMAND.name)!!

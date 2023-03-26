@@ -14,6 +14,9 @@ import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard
 import javax.inject.Named
 
+/**
+ * Command that updates friend's existing attribute value.
+ */
 @Component
 @Named(Commands.UPDATE_FRIENDS_ATTRIBUTE)
 class UpdateFriendsAttributeCommand(

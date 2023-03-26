@@ -3,6 +3,9 @@ package com.backend.kyf.utils.auth
 import redis.clients.jedis.Jedis
 import java.net.URI
 
+/**
+ * Object for setting and retrieving values from Redis database.
+ */
 object Jedis {
     private val jedis = Jedis(URI(System.getenv("RedisURL")))
 

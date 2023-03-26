@@ -2,6 +2,9 @@ package com.backend.kyf.utils.auth
 
 import org.jasypt.encryption.pbe.StandardPBEStringEncryptor
 
+/**
+ * Class for encrypting and decrypting tokens.
+ */
 class TokenEncryptor(private val secretKey: String = System.getenv("ServerSecretKey")) {
     private val encryptor = StandardPBEStringEncryptor().apply {
         setPassword(secretKey)

@@ -1,5 +1,8 @@
 package com.telegram.bot.handler
 
+/**
+ * Enum that represents current bot state.
+ */
 enum class BotState {
     EXPECTING_COMMAND,
     EXPECTING_APPROVAL,

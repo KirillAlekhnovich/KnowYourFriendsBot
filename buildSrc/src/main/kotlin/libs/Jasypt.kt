@@ -2,6 +2,9 @@ package libs
 
 import org.gradle.api.artifacts.dsl.DependencyHandler
 
+/**
+ * A library that provides a simple encryption and decryption API.
+ */
 object Jasypt {
 
     private const val jasyptVersion = "1.9.3"

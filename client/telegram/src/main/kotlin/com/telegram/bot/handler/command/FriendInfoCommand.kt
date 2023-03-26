@@ -19,6 +19,9 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import java.util.ArrayList
 import javax.inject.Named
 
+/**
+ * Command that shows info about specific friend.
+ */
 @Component
 @Named(Commands.FRIEND_INFO)
 class FriendInfoCommand(

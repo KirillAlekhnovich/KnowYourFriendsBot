@@ -13,6 +13,9 @@ import com.telegram.bot.utils.Jedis.setValue
 import com.telegram.bot.utils.RedisParams
 import org.springframework.stereotype.Component
 
+/**
+ * Class that handles user commands.
+ */
 @Component
 class CommandHandler(private val commands: MutableMap<String, Command>) {
 
@@ -30,6 +33,9 @@ class CommandHandler(private val commands: MutableMap<String, Command>) {
         CommandsMap.registerCommands(commands)
     }
 
+    /**
+     * Handles each particular command.
+     */
     fun handle(user: UserDTO, message: String): List<ClientResponseDTO> {
         val responseMessages = mutableListOf<ClientResponseDTO>()
         addToCommandsQueue(user.id, message)
