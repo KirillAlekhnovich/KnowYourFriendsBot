@@ -1,6 +1,7 @@
 # Know your friends bot
 
-Telegram bot which helps you with collecting information about what your friends like, what are their hobbies and interests.
+Telegram bot which helps you with storing information about what your friends like, what are their hobbies and interests in one place.
+
 It also allows you to set reminders about their birthdays and other important dates.
 
 >
@@ -14,8 +15,22 @@ You can try this bot by yourself - add it to Telegram: [@KnowYourFriendsTgBot](h
 
 > Currently bot is **disabled**. It will be enabled with first stable release.
 
+
+## Security
+
+Before implementing security measures, it was important to take into account the following: 
+
+* Interaction with bot should be simple and deprive the need to create login & password combination.
+* No sensitive data is expected to be stored.
+* It is very unlikely that someone will try to attack this bot.
+
+Considering all of the above, token-based authentication mechanism was chosen for securing this application.
+
+It is less secure than some other alternatives, but in this case it is acceptable.
+
+
 ## Testing
 
-There are no tests yet. I know it's not a good practice, but app extends very rapidly and refactoring is going on quite often.
+Controller and service tests can be found in [this directory](server/src/test/kotlin/com/backend/kyf).
 
-They will be added before first stable release.
+> Tests will be automated with CI before first stable release. 
