@@ -40,6 +40,7 @@ class ChangeFriendsNameCommand(
                     setValue(user.id, RedisParams.FRIEND_ID.name, friend.id.toString())
                     "What would you like to change name to?"
                 } catch (e: RuntimeException) {
+                    addToCommandsQueue(user.id, Commands.LIST_FRIENDS)
                     setValue(user.id, RedisParams.STATE.name, BotState.ERROR.name)
                     e.message!!
                 }
@@ -47,8 +48,8 @@ class ChangeFriendsNameCommand(
             BotState.EXECUTE_USING_STORAGE -> "What would you like to change name to?"
             BotState.EXPECTING_NEW_FRIEND_NAME -> {
                 try {
-                    val friendId = getValue(user.id, RedisParams.FRIEND_ID.name)!!.toLong()
                     addToCommandsQueue(user.id, Commands.FRIEND_INFO + Commands.STORAGE)
+                    val friendId = getValue(user.id, RedisParams.FRIEND_ID.name)!!.toLong()
                     friendRequestService.changeFriendsName(user.id, friendId, message)
                 } catch (e: RuntimeException) {
                     setValue(user.id, RedisParams.STATE.name, BotState.ERROR.name)

@@ -42,6 +42,7 @@ class AddFriendsAttributeCommand(
                     setValue(user.id, RedisParams.FRIEND_ID.name, friend.id.toString())
                     "What attribute would you like to add?"
                 } catch (e: RuntimeException) {
+                    addToCommandsQueue(user.id, Commands.LIST_FRIENDS)
                     setValue(user.id, RedisParams.STATE.name, BotState.ERROR.name)
                     e.message!!
                 }
@@ -57,6 +58,7 @@ class AddFriendsAttributeCommand(
                     setValue(user.id, RedisParams.ATTRIBUTE_NAME.name, message)
                     "Please specify its value"
                 } catch (e: RuntimeException) {
+                    addToCommandsQueue(user.id, Commands.FRIEND_INFO + Commands.STORAGE)
                     setValue(user.id, RedisParams.STATE.name, BotState.ERROR.name)
                     e.message!!
                 }

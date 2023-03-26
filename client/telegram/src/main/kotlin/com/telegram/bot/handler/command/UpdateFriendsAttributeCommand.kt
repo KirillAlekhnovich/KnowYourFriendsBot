@@ -44,6 +44,7 @@ class UpdateFriendsAttributeCommand(
                     setValue(user.id, RedisParams.FRIEND_ID.name, friend.id.toString())
                     "What attribute would you like to update?"
                 } catch (e: RuntimeException) {
+                    addToCommandsQueue(user.id, Commands.LIST_FRIENDS)
                     setValue(user.id, RedisParams.STATE.name, BotState.ERROR.name)
                     e.message!!
                 }
@@ -53,6 +54,7 @@ class UpdateFriendsAttributeCommand(
                 try {
                     val friendId = getValue(user.id, RedisParams.FRIEND_ID.name)!!.toLong()
                     if (!friendRequestService.hasAttribute(user.id, friendId, message)) {
+                        addToCommandsQueue(user.id, Commands.FRIEND_INFO + Commands.STORAGE)
                         setValue(user.id, RedisParams.STATE.name, BotState.ERROR.name)
                         "Friend doesn't have attribute with name $message"
                     } else {
@@ -60,6 +62,7 @@ class UpdateFriendsAttributeCommand(
                         "Please specify its new value"
                     }
                 } catch (e: RuntimeException) {
+                    addToCommandsQueue(user.id, Commands.FRIEND_INFO + Commands.STORAGE)
                     setValue(user.id, RedisParams.STATE.name, BotState.ERROR.name)
                     e.message!!
                 }

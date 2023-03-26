@@ -43,6 +43,7 @@ class RemoveFriendsAttributeCommand(
                     setValue(user.id, RedisParams.FRIEND_ID.name, friend.id.toString())
                     "What attribute would you like to remove?"
                 } catch (e: RuntimeException) {
+                    addToCommandsQueue(user.id, Commands.LIST_FRIENDS)
                     setValue(user.id, RedisParams.STATE.name, BotState.ERROR.name)
                     e.message!!
                 }
